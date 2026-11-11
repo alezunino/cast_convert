@@ -4,8 +4,10 @@ import logging
 from asyncio import BoundedSemaphore, TaskGroup, to_thread
 from collections.abc import Iterable
 from enum import StrEnum, auto
+from functools import cache
 from pathlib import Path
 from shlex import quote
+from subprocess import CalledProcessError, run
 from typing import Final
 
 import ffmpeg
@@ -30,7 +32,8 @@ DEFAULT_EXT: Final[Extension] = Container.matroska.to_extension()
 TRANSCODE_SUFFIX: Final[str] = '_transcoded'
 
 SCALE_RESOLUTION: Final[int] = -2  # see: https://stackoverflow.com/a/29582287
-HWACCEL_DEVICE: Final[Path] = Path('/dev/dri/renderD128')
+VAAPI_SUFFIX: Final[str] = '_vaapi'
+DRI_DIR: Final[Path] = Path('/dev/dri')
 
 
 class FfmpegOpt(StrEnum):
@@ -38,16 +41,16 @@ class FfmpegOpt(StrEnum):
   vcodec = auto()
   scodec = auto()
   vprofile = auto()
-  vlevel = auto()
+  level = auto()
   fps = auto()
   r = auto()
 
   fflags = auto()
   movflags = auto()
 
-  hwaccel = auto()
-  hwaccel_output_format = auto()
   vaapi_device = auto()
+  format = auto()
+  hwupload = auto()
 
   scale = auto()
   threads = auto()
@@ -61,12 +64,11 @@ class FfmpegArg(StrEnum):
 
 class FfmpegVal(StrEnum):
   copy = auto()
-  vaapi = auto()
   faststart = auto()
+  nv12 = auto()
 
   genpts = '+genpts'
   scale_resolution = str(SCALE_RESOLUTION)
-  vaapi_device = str(HWACCEL_DEVICE)
 
   vfr = auto()
 
@@ -86,12 +88,6 @@ DEFAULT_OUTPUT_OPTS: Final[Options] = {
   FfmpegOpt.movflags: FfmpegVal.faststart,
 }
 
-HWACCEL_OPTS: Final[Options] = {
-  FfmpegOpt.hwaccel: FfmpegVal.vaapi,
-  FfmpegOpt.hwaccel_output_format: FfmpegVal.vaapi,
-  FfmpegOpt.vaapi_device: FfmpegVal.vaapi_device,
-}
-
 DEFAULT_INPUT_OPTS: Final[Options] = {
   FfmpegOpt.fflags: FfmpegVal.genpts,
 }
@@ -103,7 +99,33 @@ GLOBAL_ARGS: Final[Args] = [
 GLOBAL_OPTS: Final[Options] = {}
 
 
-def get_encoder(codec: Codecs | Subtitle) -> Alias:
+@cache
+def get_vaapi_device() -> Path | None:
+  return first(sorted(DRI_DIR.glob('renderD*')))
+
+
+@cache
+def get_vaapi_encoders() -> frozenset[str]:
+  if not get_vaapi_device():
+    return frozenset()
+
+  try:
+    result = run(['ffmpeg', '-hide_banner', '-encoders'], capture_output=True, text=True, check=True)
+  except (OSError, CalledProcessError):
+    return frozenset()
+
+  encoders: set[str] = set()
+
+  for line in result.stdout.splitlines():
+    parts = line.split()
+
+    if len(parts) > 1 and parts[1].endswith(VAAPI_SUFFIX):
+      encoders.add(parts[1])
+
+  return frozenset(encoders)
+
+
+def get_encoder(codec: Codecs | Subtitle, hardware: bool = False) -> Alias:
   encoders: Aliases
 
   match codec:
@@ -119,7 +141,10 @@ def get_encoder(codec: Codecs | Subtitle) -> Alias:
     case obj:
       raise TypeError(f"{obj} not a codec")
 
-  return first(encoders)
+  if hardware and (vaapi := first(e for e in encoders if e in get_vaapi_encoders())):
+    return vaapi
+
+  return first(e for e in encoders if not e.endswith(VAAPI_SUFFIX))
 
 
 def transcode_video(
@@ -128,12 +153,22 @@ def transcode_video(
   replace: bool = DEFAULT_REPLACE,
   threads: int = DEFAULT_THREADS,
   subtitle: Path | None = None,
+  hardware: bool = True,
 ) -> Video:
-  stream, converted = get_stream(video, formats, threads, replace, subtitle)
+  stream, converted = get_stream(video, formats, threads, replace, subtitle, hardware)
   cmd = get_ffmpeg_cmd(stream, video.path)
 
   log.info(f'Running command: {cmd}')
-  stream.run()  # type: ignore
+
+  try:
+    stream.run()  # type: ignore
+
+  except ffmpeg.Error:
+    if not hardware or VAAPI_SUFFIX not in cmd:
+      raise
+
+    log.warning('VAAPI encoding failed, retrying with software encoding')
+    return transcode_video(video, formats, replace, threads, subtitle, hardware=False)
 
   original: Path = video.path
 
@@ -166,17 +201,23 @@ def get_stream(
   threads: int = DEFAULT_THREADS,
   replace: bool = DEFAULT_REPLACE,
   subtitle: Path | None = None,
+  hardware: bool = True,
 ) -> tuple[OutputStream, Path]:
   input_opts = get_input_opts(formats)
-  output_opts = get_output_opts(video, formats, threads)
+  output_opts = get_output_opts(video, formats, threads, hardware)
   new_path = get_new_path(video, formats, replace)
+
+  vaapi = str(output_opts.get(FfmpegOpt.vcodec, '')).endswith(VAAPI_SUFFIX)
+
+  if vaapi and (device := get_vaapi_device()):
+    input_opts[FfmpegOpt.vaapi_device] = str(device)
 
   stream = ffmpeg.input(
     str(video.path),
     **input_opts,
   )
 
-  if filters := get_video_filters(stream, formats):
+  if filters := get_video_filters(stream, formats, vaapi):
     if output_opts.get(FfmpegOpt.vcodec) is FfmpegVal.copy:
       output_opts.pop(FfmpegOpt.vcodec)
 
@@ -225,6 +266,7 @@ def get_output_opts(
   video: Video,
   formats: Formats,
   threads: int = DEFAULT_THREADS,
+  hardware: bool = False,
 ) -> Options:
   opts: Options = DEFAULT_OUTPUT_OPTS.copy()
   opts[FfmpegOpt.threads] = threads
@@ -233,7 +275,7 @@ def get_output_opts(
     opts[FfmpegOpt.acodec] = get_encoder(codec)
 
   if (profile := formats.video_profile) and (codec := profile.codec):
-    opts[FfmpegOpt.vcodec] = get_encoder(codec)
+    opts[FfmpegOpt.vcodec] = get_encoder(codec, hardware)
 
   if subtitle := formats.subtitle:
     opts[FfmpegOpt.scodec] = get_encoder(subtitle)
@@ -248,11 +290,11 @@ def get_output_opts(
     opts[FfmpegOpt.r] = fps
 
   if level:
-    opts[FfmpegOpt.vlevel] = level
+    opts[FfmpegOpt.level] = level
 
     if FfmpegOpt.vcodec not in opts:
       codec = video.formats.video_profile.codec
-      opts[FfmpegOpt.vcodec] = get_encoder(codec)
+      opts[FfmpegOpt.vcodec] = get_encoder(codec, hardware)
 
   return opts
 
@@ -271,13 +313,11 @@ def get_input_opts(formats: Formats) -> Options:
 def get_video_filters(
   stream: FilterableStream,
   formats: Formats,
+  upload: bool = False,
 ) -> FilterableStream | None:
-  if not (profile := formats.video_profile):
-    return None
-
   filters: FilterableStream | None = None
 
-  if resolution := profile.resolution:
+  if (profile := formats.video_profile) and (resolution := profile.resolution):
     width, height = resolution
 
     filters = ffmpeg.filter(
@@ -286,6 +326,11 @@ def get_video_filters(
       height,  # resolution
       FfmpegVal.scale_resolution,
     )
+
+  if upload:
+    source = filters if filters is not None else stream
+    filters = ffmpeg.filter(source, FfmpegOpt.format, FfmpegVal.nv12)
+    filters = ffmpeg.filter(filters, FfmpegOpt.hwupload)
 
   return filters
 
@@ -296,6 +341,7 @@ def convert_from_name_path(
   replace: bool = DEFAULT_REPLACE,
   threads: int = DEFAULT_THREADS,
   subtitle: Path | None = None,
+  hardware: bool = True,
 ) -> Video | None:
   video = Video.from_path(path)
   device = load_device_with_name(name)
@@ -308,7 +354,7 @@ def convert_from_name_path(
     return None
 
   try:
-    return transcode_video(video, formats, replace, threads, subtitle)
+    return transcode_video(video, formats, replace, threads, subtitle, hardware)
 
   except Exception as e:
     log.exception(e)
@@ -325,13 +371,14 @@ async def convert_paths(
   *paths: Path,
   strategy: Strategy = Strategy.quit,
   subtitle: Path | None = None,
+  hardware: bool = True,
 ):
   sem = BoundedSemaphore(jobs)
   handled_converter = get_error_handler(convert_from_name_path, UnknownFormat, strategy=strategy)
 
   async def convert(path: Path):
     async with sem:
-      await to_thread(handled_converter, name, path, replace, threads, subtitle)
+      await to_thread(handled_converter, name, path, replace, threads, subtitle, hardware)
 
   async with TaskGroup() as tg:
     for path in paths:

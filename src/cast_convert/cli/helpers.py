@@ -53,6 +53,7 @@ def _get_command(
   threads: int = DEFAULT_THREADS,
   error: Strategy = Strategy.quit,
   subtitle: Path | None = None,
+  hardware: bool = True,
 ) -> bool | NoReturn:
   video = Video.from_path(path)
 
@@ -66,7 +67,7 @@ def _get_command(
     return False
 
   formats = device.transcode_to(video)
-  stream, _ = get_stream(video, formats, threads, replace)
+  stream, _ = get_stream(video, formats, threads, replace, subtitle, hardware)
 
   cmd = get_ffmpeg_cmd(stream, video.path)
   print(f'[b]{escape(cmd)}')

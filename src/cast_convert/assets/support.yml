@@ -66,13 +66,13 @@ codec_container_compat:
 encoders:
   video:
     avc:
-#      - h264_vaapi
+      - h264_vaapi
 #      - h264_amf
 #      - h264_nvenc
 #      - h264_qsv
       - libx264
     hevc:
-#      - hevc_vaapi
+      - hevc_vaapi
 #      - hevc_amf
 #      - hevc_nvenc
 #      - hevc_qsv

@@ -202,10 +202,10 @@ to `cast-convert`.
 ```bash
 $ cast-convert command vid1.mkv vid2.mkv
 ffmpeg -fflags +genpts -i 'vid1.mkv' -acodec copy -movflags faststart -scodec 
-copy -threads 12 -vcodec libx264 -vlevel 4.1 'vid1_transcoded.mkv' -y
+copy -threads 12 -vcodec libx264 -level 4.1 'vid1_transcoded.mkv' -y
 
 ffmpeg -fflags +genpts -i 'vid2.mkv' -acodec copy -movflags faststart -scodec 
-copy -threads 12 -vcodec libx264 -vlevel 4.1 'vid2_transcoded.mkv' -y
+copy -threads 12 -vcodec libx264 -level 4.1 'vid2_transcoded.mkv' -y
 ```
 
 ### Commands

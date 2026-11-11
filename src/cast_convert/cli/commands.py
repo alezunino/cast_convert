@@ -108,6 +108,14 @@ DEFAULT_SUBTITLE_OPT: Final[ArgumentInfo] = Option(
   rich_help_panel=Panels.encoder_options,
 )
 
+DEFAULT_HWACCEL_OPT: Final[OptionInfo] = Option(
+  True,
+  '--hwaccel/--no-hwaccel',
+  help='🎮 Use VAAPI hardware encoding when available.',
+  rich_help_panel=Panels.encoder_options,
+  show_default=False,
+)
+
 LONG_DESCRIPTION: Final[str] = f"""
 {DESCRIPTION}
 
@@ -136,6 +144,7 @@ def command(
   threads: int = DEFAULT_THREADS_OPT,
   error: Strategy = DEFAULT_STRATEGY_OPT,
   subtitle: Path | None = DEFAULT_SUBTITLE_OPT,
+  hwaccel: bool = DEFAULT_HWACCEL_OPT,
 ):
   """
   📜 Get FFmpeg transcoding command.
@@ -143,7 +152,7 @@ def command(
   rc: int = Rc.ok
 
   for path in paths:
-    if _get_command(name, path, replace, threads, error, subtitle):
+    if _get_command(name, path, replace, threads, error, subtitle, hwaccel):
       rc = Rc.must_convert
 
   raise Exit(rc)
@@ -162,11 +171,12 @@ def convert(
   threads: int = DEFAULT_THREADS_OPT,
   error: Strategy = DEFAULT_STRATEGY_OPT,
   subtitle: Path | None = DEFAULT_SUBTITLE_OPT,
+  hwaccel: bool = DEFAULT_HWACCEL_OPT,
 ):
   """
   📼 Convert videos so that they're compatible with specified device.
   """
-  coro = convert_paths(name, replace, threads, jobs, *paths, strategy=error, subtitle=subtitle)
+  coro = convert_paths(name, replace, threads, jobs, *paths, strategy=error, subtitle=subtitle, hardware=hwaccel)
   run(coro)
 
 
@@ -224,6 +234,7 @@ def watch(
   threads: int = DEFAULT_THREADS_OPT,
   error: Strategy = DEFAULT_STRATEGY_OPT,
   subtitle: Path | None = DEFAULT_SUBTITLE_OPT,
+  hwaccel: bool = DEFAULT_HWACCEL_OPT,
 ):
   """
   👀 Watch directories for new or modified videos and convert them.
@@ -236,6 +247,7 @@ def watch(
     threads=threads,
     error=error,
     subtitle=subtitle,
+    hardware=hwaccel,
   )
   run(coro)
 

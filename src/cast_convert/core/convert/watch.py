@@ -122,6 +122,7 @@ async def convert(
   replace: bool = DEFAULT_REPLACE,
   threads: int = DEFAULT_THREADS,
   subtitle: Path | None = None,
+  hardware: bool = True,
 ) -> Video | None:
   path = path.absolute()
 
@@ -131,7 +132,7 @@ async def convert(
     if not await is_video(path):
       return None
 
-    return await to_thread(convert_from_name_path, device, path, replace, threads, subtitle)
+    return await to_thread(convert_from_name_path, device, path, replace, threads, subtitle, hardware)
 
 
 async def convert_videos(
@@ -143,6 +144,7 @@ async def convert_videos(
   threads: int = DEFAULT_THREADS,
   error: Strategy = Strategy.quit,
   subtitle: Path | None = None,
+  hardware: bool = True,
 ):
   if seen is None:
     seen = Paths()
@@ -152,5 +154,5 @@ async def convert_videos(
 
   async with TaskGroup() as tg:
     async for path in gen_new_files(*paths, seen=seen):
-      coro = handled_converter(device, path, sem, replace, threads, subtitle)
+      coro = handled_converter(device, path, sem, replace, threads, subtitle, hardware)
       tg.create_task(coro)
