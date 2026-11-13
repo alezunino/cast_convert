@@ -190,6 +190,9 @@ devices:
   Chromecast 1st Gen:
     <<: *device
 
+  Roku HD:
+    <<: *device
+
   Chromecast 2nd Gen:
     <<: *device
 

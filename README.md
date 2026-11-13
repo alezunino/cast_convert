@@ -75,6 +75,7 @@ each video back.
 ### Supported devices
 
 - Chromecast 1st Gen
+- Roku HD
 - Chromecast 2nd Gen
 - Chromecast 3rd Gen
 - Chromecast Ultra
