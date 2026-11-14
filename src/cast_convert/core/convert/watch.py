@@ -11,7 +11,7 @@ from .run import convert_from_name_path
 from ..base import DEFAULT_JOBS, DEFAULT_MODEL, DEFAULT_REPLACE, DEFAULT_THREADS, \
   FILESIZE_CHECK_WAIT, NO_SIZE, get_error_handler
 from ..enums import Strategy
-from ..exceptions import UnknownFormat
+from ..exceptions import ConversionFailed, GpuPipelineError, UnknownFormat
 from ..model.video import Video
 from ..types import Paths
 
@@ -123,6 +123,7 @@ async def convert(
   threads: int = DEFAULT_THREADS,
   subtitle: Path | None = None,
   hardware: bool = True,
+  gpu_pipeline: bool = False,
 ) -> Video | None:
   path = path.absolute()
 
@@ -132,7 +133,12 @@ async def convert(
     if not await is_video(path):
       return None
 
-    return await to_thread(convert_from_name_path, device, path, replace, threads, subtitle, hardware)
+    try:
+      return await to_thread(
+        convert_from_name_path, device, path, replace, threads, subtitle, hardware, gpu_pipeline,
+      )
+    except ConversionFailed:
+      return None
 
 
 async def convert_videos(
@@ -145,14 +151,15 @@ async def convert_videos(
   error: Strategy = Strategy.quit,
   subtitle: Path | None = None,
   hardware: bool = True,
+  gpu_pipeline: bool = False,
 ):
   if seen is None:
     seen = Paths()
 
   sem = BoundedSemaphore(jobs)
-  handled_converter = get_error_handler(convert, UnknownFormat, strategy=error)
+  handled_converter = get_error_handler(convert, UnknownFormat, GpuPipelineError, strategy=error)
 
   async with TaskGroup() as tg:
     async for path in gen_new_files(*paths, seen=seen):
-      coro = handled_converter(device, path, sem, replace, threads, subtitle, hardware)
+      coro = handled_converter(device, path, sem, replace, threads, subtitle, hardware, gpu_pipeline)
       tg.create_task(coro)

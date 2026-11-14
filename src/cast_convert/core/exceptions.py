@@ -27,3 +27,11 @@ class FileNotVideo(FormatError):
 
 class DeviceError(CastConvertException):
   pass
+
+
+class GpuPipelineError(CastConvertException):
+  pass
+
+
+class ConversionFailed(CastConvertException):
+  pass

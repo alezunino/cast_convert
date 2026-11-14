@@ -7,6 +7,7 @@ from enum import StrEnum, auto
 from functools import cache
 from pathlib import Path
 from shlex import quote
+from shutil import which
 from subprocess import CalledProcessError, run
 from typing import Final
 
@@ -16,7 +17,7 @@ from ffmpeg.nodes import FilterableStream, OutputStream
 from .transcode import should_transcode, show_transcode_dismissal
 from ..base import DEFAULT_REPLACE, DEFAULT_THREADS, JOIN_COMMAND, first, get_error_handler
 from ..enums import Strategy
-from ..exceptions import UnknownFormat
+from ..exceptions import ConversionFailed, GpuPipelineError, UnknownFormat
 from ..media.codecs import AudioCodec, Codecs, Container, Subtitle, VideoCodec
 from ..media.formats import Formats
 from ..model.device import load_device_with_name
@@ -33,6 +34,13 @@ TRANSCODE_SUFFIX: Final[str] = '_transcoded'
 
 SCALE_RESOLUTION: Final[int] = -2  # see: https://stackoverflow.com/a/29582287
 VAAPI_SUFFIX: Final[str] = '_vaapi'
+VAAPI_DECODE_ENTRYPOINT: Final[str] = 'VAEntrypointVLD'
+VAAPI_DECODE_PROFILES: Final[dict[VideoCodec, str]] = {
+  VideoCodec.avc: 'VAProfileH264',
+  VideoCodec.hevc: 'VAProfileHEVC',
+  VideoCodec.vp8: 'VAProfileVP8',
+  VideoCodec.vp9: 'VAProfileVP9',
+}
 DRI_DIR: Final[Path] = Path('/dev/dri')
 
 
@@ -48,11 +56,15 @@ class FfmpegOpt(StrEnum):
   fflags = auto()
   movflags = auto()
 
+  hwaccel = auto()
+  hwaccel_device = auto()
+  hwaccel_output_format = auto()
   vaapi_device = auto()
   format = auto()
   hwupload = auto()
 
   scale = auto()
+  scale_vaapi = auto()
   threads = auto()
 
   vsync = auto()
@@ -66,6 +78,7 @@ class FfmpegVal(StrEnum):
   copy = auto()
   faststart = auto()
   nv12 = auto()
+  vaapi = auto()
 
   genpts = '+genpts'
   scale_resolution = str(SCALE_RESOLUTION)
@@ -125,6 +138,40 @@ def get_vaapi_encoders() -> frozenset[str]:
   return frozenset(encoders)
 
 
+@cache
+def get_vaapi_decoders() -> frozenset[str]:
+  device = get_vaapi_device()
+
+  if not device or not which('vainfo'):
+    return frozenset()
+
+  try:
+    result = run(
+      ['vainfo', '--display', 'drm', '--device', str(device)],
+      capture_output=True,
+      text=True,
+      check=True,
+    )
+  except (OSError, CalledProcessError):
+    return frozenset()
+
+  decoders: set[str] = set()
+
+  for line in result.stdout.splitlines():
+    profile, sep, entrypoint = line.partition(':')
+
+    if sep and entrypoint.strip() == VAAPI_DECODE_ENTRYPOINT:
+      decoders.add(profile.strip())
+
+  return frozenset(decoders)
+
+
+def supports_vaapi_decode(codec: VideoCodec) -> bool:
+  prefix = VAAPI_DECODE_PROFILES.get(codec)
+
+  return prefix is not None and any(p.startswith(prefix) for p in get_vaapi_decoders())
+
+
 def get_encoder(codec: Codecs | Subtitle, hardware: bool = False) -> Alias:
   encoders: Aliases
 
@@ -154,8 +201,9 @@ def transcode_video(
   threads: int = DEFAULT_THREADS,
   subtitle: Path | None = None,
   hardware: bool = True,
+  gpu_pipeline: bool = False,
 ) -> Video:
-  stream, converted = get_stream(video, formats, threads, replace, subtitle, hardware)
+  stream, converted = get_stream(video, formats, threads, replace, subtitle, hardware, gpu_pipeline)
   cmd = get_ffmpeg_cmd(stream, video.path)
 
   log.info(f'Running command: {cmd}')
@@ -164,7 +212,7 @@ def transcode_video(
     stream.run()  # type: ignore
 
   except ffmpeg.Error:
-    if not hardware or VAAPI_SUFFIX not in cmd:
+    if not hardware or gpu_pipeline or VAAPI_SUFFIX not in cmd:
       raise
 
     log.warning('VAAPI encoding failed, retrying with software encoding')
@@ -195,6 +243,16 @@ def get_ffmpeg_cmd(
   return JOIN_COMMAND.join(args)
 
 
+def check_gpu_pipeline(video: Video, vaapi: bool):
+  if not vaapi:
+    raise GpuPipelineError('--gpu-pipeline requires VAAPI encoding (check --hwaccel and VAAPI support)')
+
+  source = video.formats.video_profile
+
+  if not source or not supports_vaapi_decode(source.codec):
+    raise GpuPipelineError(f'VAAPI cannot decode {video.path.name} on this system')
+
+
 def get_stream(
   video: Video,
   formats: Formats,
@@ -202,6 +260,7 @@ def get_stream(
   replace: bool = DEFAULT_REPLACE,
   subtitle: Path | None = None,
   hardware: bool = True,
+  gpu_pipeline: bool = False,
 ) -> tuple[OutputStream, Path]:
   input_opts = get_input_opts(formats)
   output_opts = get_output_opts(video, formats, threads, hardware)
@@ -212,18 +271,33 @@ def get_stream(
   if vaapi and (device := get_vaapi_device()):
     input_opts[FfmpegOpt.vaapi_device] = str(device)
 
-  stream = ffmpeg.input(
+  gpu = gpu_pipeline and output_opts[FfmpegOpt.vcodec] is not FfmpegVal.copy
+
+  if gpu:
+    check_gpu_pipeline(video, vaapi)
+
+    input_opts |= {
+      FfmpegOpt.hwaccel: FfmpegVal.vaapi,
+      FfmpegOpt.hwaccel_device: str(get_vaapi_device()),
+      FfmpegOpt.hwaccel_output_format: FfmpegVal.vaapi,
+    }
+
+  source = ffmpeg.input(
     str(video.path),
     **input_opts,
   )
+  stream = source
+  extra = ()
 
-  if filters := get_video_filters(stream, formats, vaapi):
+  if filters := get_video_filters(source, formats, upload=vaapi and not gpu, gpu=gpu):
     if output_opts.get(FfmpegOpt.vcodec) is FfmpegVal.copy:
       output_opts.pop(FfmpegOpt.vcodec)
 
     stream = filters
+    extra = (source['a?'], source['s?'])
 
   stream = stream.output(
+    *extra,
     str(new_path),
     **output_opts,
   )
@@ -314,17 +388,30 @@ def get_video_filters(
   stream: FilterableStream,
   formats: Formats,
   upload: bool = False,
+  gpu: bool = False,
 ) -> FilterableStream | None:
   filters: FilterableStream | None = None
 
-  if (profile := formats.video_profile) and (resolution := profile.resolution):
+  profile = formats.video_profile
+  resolution = profile.resolution if profile else None
+
+  if gpu:
+    scale_args: dict[str, str | int] = {'format': FfmpegVal.nv12}
+
+    if resolution:
+      _, height = resolution
+      scale_args = {'w': f'trunc(iw*{height}/ih/2)*2', 'h': height, **scale_args}
+
+    filters = ffmpeg.filter(stream, FfmpegOpt.scale_vaapi, **scale_args)
+
+  elif resolution:
     width, height = resolution
 
     filters = ffmpeg.filter(
       stream,
       FfmpegOpt.scale,
-      height,  # resolution
       FfmpegVal.scale_resolution,
+      height,  # resolution
     )
 
   if upload:
@@ -342,6 +429,7 @@ def convert_from_name_path(
   threads: int = DEFAULT_THREADS,
   subtitle: Path | None = None,
   hardware: bool = True,
+  gpu_pipeline: bool = False,
 ) -> Video | None:
   video = Video.from_path(path)
   device = load_device_with_name(name)
@@ -354,13 +442,16 @@ def convert_from_name_path(
     return None
 
   try:
-    return transcode_video(video, formats, replace, threads, subtitle, hardware)
+    return transcode_video(video, formats, replace, threads, subtitle, hardware, gpu_pipeline)
+
+  except GpuPipelineError:
+    raise
 
   except Exception as e:
     log.exception(e)
     log.error(f'Error while converting {video} to {formats}')
 
-    return None
+    raise ConversionFailed(f'Error while converting {video}') from e
 
 
 async def convert_paths(
@@ -372,13 +463,20 @@ async def convert_paths(
   strategy: Strategy = Strategy.quit,
   subtitle: Path | None = None,
   hardware: bool = True,
+  gpu_pipeline: bool = False,
 ):
   sem = BoundedSemaphore(jobs)
-  handled_converter = get_error_handler(convert_from_name_path, UnknownFormat, strategy=strategy)
+  handled_converter = get_error_handler(
+    convert_from_name_path,
+    UnknownFormat,
+    GpuPipelineError,
+    ConversionFailed,
+    strategy=strategy,
+  )
 
   async def convert(path: Path):
     async with sem:
-      await to_thread(handled_converter, name, path, replace, threads, subtitle, hardware)
+      await to_thread(handled_converter, name, path, replace, threads, subtitle, hardware, gpu_pipeline)
 
   async with TaskGroup() as tg:
     for path in paths:

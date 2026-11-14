@@ -14,7 +14,7 @@ from ..core.base import DEFAULT_REPLACE, DEFAULT_THREADS, get_error_handler
 from ..core.convert.run import get_ffmpeg_cmd, get_stream
 from ..core.convert.transcode import should_transcode, show_transcode_dismissal
 from ..core.enums import Rc, Strategy
-from ..core.exceptions import UnknownFormat
+from ..core.exceptions import GpuPipelineError, UnknownFormat
 from ..core.fmt import esc, tabs
 from ..core.media.codecs import AudioCodec
 from ..core.model.device import Device, Devices, get_device_fuzzy, get_devices_from_file
@@ -54,6 +54,7 @@ def _get_command(
   error: Strategy = Strategy.quit,
   subtitle: Path | None = None,
   hardware: bool = True,
+  gpu_pipeline: bool = False,
 ) -> bool | NoReturn:
   video = Video.from_path(path)
 
@@ -67,7 +68,13 @@ def _get_command(
     return False
 
   formats = device.transcode_to(video)
-  stream, _ = get_stream(video, formats, threads, replace, subtitle, hardware)
+
+  try:
+    stream, _ = get_stream(video, formats, threads, replace, subtitle, hardware, gpu_pipeline)
+
+  except GpuPipelineError as e:
+    print(f'[red][❌️] {escape(str(e))}')
+    raise Exit(Rc.err)
 
   cmd = get_ffmpeg_cmd(stream, video.path)
   print(f'[b]{escape(cmd)}')

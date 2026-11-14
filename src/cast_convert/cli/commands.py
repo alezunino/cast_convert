@@ -111,7 +111,15 @@ DEFAULT_SUBTITLE_OPT: Final[ArgumentInfo] = Option(
 DEFAULT_HWACCEL_OPT: Final[OptionInfo] = Option(
   True,
   '--hwaccel/--no-hwaccel',
-  help='🎮 Use VAAPI hardware encoding when available.',
+  help='🎮 Use VAAPI hardware encoding when available. Use --no-hwaccel to force software encoding.',
+  rich_help_panel=Panels.encoder_options,
+  show_default=False,
+)
+
+DEFAULT_GPU_PIPELINE_OPT: Final[OptionInfo] = Option(
+  False,
+  '--gpu-pipeline/--no-gpu-pipeline',
+  help='🚀 Decode and encode on the GPU with VAAPI. Requires VAAPI decoding for the source codec (checked with vainfo). Unsupported files fail with an error, handled by --error.',
   rich_help_panel=Panels.encoder_options,
   show_default=False,
 )
@@ -145,6 +153,7 @@ def command(
   error: Strategy = DEFAULT_STRATEGY_OPT,
   subtitle: Path | None = DEFAULT_SUBTITLE_OPT,
   hwaccel: bool = DEFAULT_HWACCEL_OPT,
+  gpu_pipeline: bool = DEFAULT_GPU_PIPELINE_OPT,
 ):
   """
   📜 Get FFmpeg transcoding command.
@@ -152,7 +161,7 @@ def command(
   rc: int = Rc.ok
 
   for path in paths:
-    if _get_command(name, path, replace, threads, error, subtitle, hwaccel):
+    if _get_command(name, path, replace, threads, error, subtitle, hwaccel, gpu_pipeline):
       rc = Rc.must_convert
 
   raise Exit(rc)
@@ -172,11 +181,22 @@ def convert(
   error: Strategy = DEFAULT_STRATEGY_OPT,
   subtitle: Path | None = DEFAULT_SUBTITLE_OPT,
   hwaccel: bool = DEFAULT_HWACCEL_OPT,
+  gpu_pipeline: bool = DEFAULT_GPU_PIPELINE_OPT,
 ):
   """
   📼 Convert videos so that they're compatible with specified device.
   """
-  coro = convert_paths(name, replace, threads, jobs, *paths, strategy=error, subtitle=subtitle, hardware=hwaccel)
+  coro = convert_paths(
+    name,
+    replace,
+    threads,
+    jobs,
+    *paths,
+    strategy=error,
+    subtitle=subtitle,
+    hardware=hwaccel,
+    gpu_pipeline=gpu_pipeline,
+  )
   run(coro)
 
 
@@ -235,6 +255,7 @@ def watch(
   error: Strategy = DEFAULT_STRATEGY_OPT,
   subtitle: Path | None = DEFAULT_SUBTITLE_OPT,
   hwaccel: bool = DEFAULT_HWACCEL_OPT,
+  gpu_pipeline: bool = DEFAULT_GPU_PIPELINE_OPT,
 ):
   """
   👀 Watch directories for new or modified videos and convert them.
@@ -248,6 +269,7 @@ def watch(
     error=error,
     subtitle=subtitle,
     hardware=hwaccel,
+    gpu_pipeline=gpu_pipeline,
   )
   run(coro)
 
