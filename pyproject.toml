@@ -1,9 +1,10 @@
 [project]
 name = "cast_convert"
-version = "0.14.0"
+version = "0.15.0"
 description = "📽️ Identify and convert videos to formats that are Chromecast supported."
 authors = [
-  { name = "Alex DeLorenzo", url = "https://alexdelorenzo.dev", email = "projects@alexdelorenzo.dev" }
+  { name = "Alex DeLorenzo", url = "https://alexdelorenzo.dev", email = "projects@alexdelorenzo.dev" },
+  { name = "Alejandro Zunino", url = "https://users.exa.unicen.edu.ar/~azunino/", email = "azunino@gmail.com" },
 ]
 dependencies = [
   "PyYAML>=6.0, <7.0",
