@@ -1,8 +1,13 @@
 from __future__ import annotations
+from importlib.metadata import PackageNotFoundError, version
 from typing import Final
 
 
-__version__: Final[str] = '0.15.1'
+try:
+  __version__: Final[str] = version('cast_convert')
+except PackageNotFoundError:
+  # Package metadata unavailable (e.g. running from source without installing).
+  __version__ = '0.0.0'
 
 NAME: Final[str] = 'cast_convert'
 PROJECT_HOME: Final[str] = 'https://github.com/alexdelorenzo/cast_convert'
