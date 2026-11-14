@@ -5,15 +5,15 @@ from typing import Final
 __version__: Final[str] = '0.13.1'
 
 NAME: Final[str] = 'cast_convert'
-PROJECT_HOME: Final[str] = 'https://github.com/alexdelorenzo/cast_contvert'
+PROJECT_HOME: Final[str] = 'https://github.com/alexdelorenzo/cast_convert'
 AUTHOR_HOME: Final[str] = 'https://alexdelorenzo.dev'
 AUTHOR: Final[str] = 'Alex DeLorenzo'
 AUTHOR_INFO: Final[str] = f'{AUTHOR} ({AUTHOR_HOME})'
-COPYRIGHT_NOTICE: Final[str] = f'Copyright © 2023 [b]{AUTHOR_INFO}[/b]'
+COPYRIGHT_NOTICE: Final[str] = f'Copyright © 2023 {AUTHOR_INFO}'
 LICENSE: Final[str] = 'CC BY-NC-ND 4.0'
 
 DESCRIPTION: Final[str] = \
-  "📽️ Identify and convert videos to formats that are Chromecast supported."
+  "Identify and convert videos to formats that are Chromecast supported."
 
 CMD: Final[str] = 'cast-convert'
 CLI_MODULE: Final[str] = f'{NAME}.cli'

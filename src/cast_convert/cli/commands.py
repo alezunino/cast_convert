@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from asyncio import run
-from enum import StrEnum
 from pathlib import Path
 from typing import Final
 
@@ -23,80 +22,63 @@ from ..core.model.device import get_devices_from_file
 THREAD_COUNT: Final[int] = max(int(DEFAULT_THREADS / DEFAULT_JOBS), 1)
 
 
-class Panels(StrEnum):
-  about = "❓ About"
-  analyze = '📊 Analyze'
-  convert = '📽️ Convert'
-  device = '📺 Device'
-  encoder_options = '🖥 Encoder Options'
-  supported = "🛠️ Hardware Support"
-
-
 DEFAULT_NAME_OPT: Final[OptionInfo] = Option(
   DEFAULT_MODEL,
   '--name', '-n',
-  help='📛 Device model name',
-  rich_help_panel=Panels.device,
+  help='Device model name.',
 )
 
 DEFAULT_PATHS_ARG: Final[ArgumentInfo] = Argument(
   default=...,
   help='Path(s) to video(s).',
   resolve_path=True,
-  metavar='📂PATHS',
+  metavar='PATHS',
   show_default=False,
 )
 
 DEFAULT_REPLACE_OPT: Final[OptionInfo] = Option(
   False,
   '--replace', '-r',
-  help='💾 Replace original file with transcoded video.',
-  rich_help_panel=Panels.encoder_options,
+  help='Replace original file with transcoded video.',
   show_default=True,
 )
 
 DEFAULT_THREADS_OPT: Final[OptionInfo] = Option(
   THREAD_COUNT,
   '--threads', '-t',
-  help="🧵 Number of threads to tell FFMPEG to use per job.",
-  rich_help_panel=Panels.encoder_options,
+  help="Number of threads to tell FFMPEG to use per job.",
 )
 
 DEFAULT_JOBS_OPT: Final[OptionInfo] = Option(
   DEFAULT_JOBS,
   '--jobs', '-j',
-  help=":input_numbers: Number of simultaneous transcoding jobs.",
-  rich_help_panel=Panels.encoder_options
+  help="Number of simultaneous transcoding jobs.",
 )
 
 DEFAULT_LOG_OPT: Final[OptionInfo] = Option(
   DEFAULT_LOG_LEVEL,
   '--log-level', '-l',
-  help="🪵 Set the minimum logging level.",
+  help="Set the minimum logging level.",
   show_default=True,
-  rich_help_panel=Panels.about,
 )
 
 DEFAULT_STRATEGY_OPT: Final[OptionInfo] = Option(
   Strategy.quit,
   '--error', '-e',
-  help="❗ Set the error handling strategy.",
+  help="Set the error handling strategy.",
   show_default=True,
-  rich_help_panel=Panels.analyze,
 )
 
 DEFAULT_VERSION_OPT: Final[OptionInfo] = Option(
   False,
   '--version', '-v',
-  help="🔢 Show application version and quit.",
-  rich_help_panel=Panels.about,
+  help="Show application version and quit.",
 )
 
 DEFAULT_DETAILS_OPT: Final[OptionInfo] = Option(
   False,
   '--details', '-d',
-  help=":information: Show detailed device information.",
-  rich_help_panel=Panels.device
+  help="Show detailed device information.",
 )
 
 DEFAULT_SUBTITLE_OPT: Final[ArgumentInfo] = Option(
@@ -105,43 +87,38 @@ DEFAULT_SUBTITLE_OPT: Final[ArgumentInfo] = Option(
   help='Path to subtitle file to embed.',
   resolve_path=True,
   show_default=False,
-  rich_help_panel=Panels.encoder_options,
 )
 
 DEFAULT_HWACCEL_OPT: Final[OptionInfo] = Option(
   True,
   '--hwaccel/--no-hwaccel',
-  help='🎮 Use VAAPI hardware encoding when available. Use --no-hwaccel to force software encoding.',
-  rich_help_panel=Panels.encoder_options,
+  help='Use VAAPI hardware encoding when available. Use --no-hwaccel to force software encoding.',
   show_default=False,
 )
 
 DEFAULT_GPU_PIPELINE_OPT: Final[OptionInfo] = Option(
   False,
   '--gpu-pipeline/--no-gpu-pipeline',
-  help='🚀 Decode and encode on the GPU with VAAPI. Requires VAAPI decoding for the source codec (checked with vainfo). Unsupported files fail with an error, handled by --error.',
-  rich_help_panel=Panels.encoder_options,
+  help='Decode and encode on the GPU with VAAPI. Requires VAAPI decoding for the source codec (checked with vainfo). Unsupported files fail with an error, handled by --error.',
   show_default=False,
 )
 
 LONG_DESCRIPTION: Final[str] = f"""
 {DESCRIPTION}
 
-\n\t
-  See [b]{PROJECT_HOME}[/b] for more information.
-  {COPYRIGHT_NOTICE}. License: {LICENSE}
+See {PROJECT_HOME} for more information.
+{COPYRIGHT_NOTICE}. License: {LICENSE}
 """
 
 cli: Final[Typer] = Typer(
   no_args_is_help=True,
   help=LONG_DESCRIPTION,
-  rich_markup_mode='rich',
+  rich_markup_mode=None,
   name=CLI_ENTRY
 )
 
 
 @cli.command(
-  rich_help_panel=Panels.analyze,
   no_args_is_help=True,
 )
 @bad_file_exit
@@ -156,7 +133,7 @@ def command(
   gpu_pipeline: bool = DEFAULT_GPU_PIPELINE_OPT,
 ):
   """
-  📜 Get FFmpeg transcoding command.
+  Get the FFmpeg transcoding command for each video.
   """
   rc: int = Rc.ok
 
@@ -168,7 +145,6 @@ def command(
 
 
 @cli.command(
-  rich_help_panel=Panels.convert,
   no_args_is_help=True,
 )
 @bad_file_exit
@@ -184,7 +160,7 @@ def convert(
   gpu_pipeline: bool = DEFAULT_GPU_PIPELINE_OPT,
 ):
   """
-  📼 Convert videos so that they're compatible with specified device.
+  Convert videos so that they're compatible with the specified device.
   """
   coro = convert_paths(
     name,
@@ -201,7 +177,6 @@ def convert(
 
 
 @cli.command(
-  rich_help_panel=Panels.analyze,
   no_args_is_help=True,
 )
 @bad_file_exit
@@ -211,7 +186,7 @@ def inspect(
   error: Strategy = DEFAULT_STRATEGY_OPT,
 ):
   """
-  🔎 Inspect videos to see what attributes should get transcoded.
+  Inspect videos to see which attributes would be transcoded.
   """
   rc: int = Rc.ok
 
@@ -225,24 +200,20 @@ def inspect(
   raise Exit(rc)
 
 
-@cli.command(
-  rich_help_panel=Panels.supported,
-  # no_args_is_help=True,
-)
+@cli.command()
 def devices(
   details: bool = DEFAULT_DETAILS_OPT,
 ):
   """
-  📺 List all supported devices.
+  List all supported devices.
   """
   _devices = get_devices_from_file()
 
-  print('You can use these device names with the [b]--name[/b] flag:')
+  print('You can use these device names with the --name flag:')
   show_devices(_devices, details)
 
 
 @cli.command(
-  rich_help_panel=Panels.convert,
   no_args_is_help=True,
 )
 @bad_file_exit
@@ -258,7 +229,7 @@ def watch(
   gpu_pipeline: bool = DEFAULT_GPU_PIPELINE_OPT,
 ):
   """
-  👀 Watch directories for new or modified videos and convert them.
+  Watch directories for new or modified videos and convert them.
   """
   coro = convert_videos(
     *paths,
@@ -290,5 +261,5 @@ def main(
     raise Exit(Rc.ok)
 
   if not ctx.invoked_subcommand:
-    print('[b red]You need to supply a command.')
+    print('You need to supply a command.')
     raise Exit(Rc.no_command)
