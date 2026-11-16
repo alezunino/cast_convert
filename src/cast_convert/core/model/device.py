@@ -15,7 +15,7 @@ from ..exceptions import UnknownFormat
 from ..media.codecs import AudioCodec, Container, Containers, Subtitle, Subtitles, VideoCodec
 from ..media.formats import Formats, Metadata, VideoFormat, VideoFormats, are_compatible
 from ..media.profiles import AudioProfile, AudioProfiles, VideoProfile, VideoProfiles
-from ..parse import DEVICE_INFO, Fmts, Yaml, get_yaml
+from ..parse import DEVICE_DATA, DEVICE_INFO, Fmts, Yaml, get_yaml
 from .video import Video, get_video_profiles
 
 
@@ -37,7 +37,9 @@ class Device(IsCompatible):
     cls: Type[Self],
     path: Path = DEVICE_INFO
   ) -> Iterable[Self]:
-    yaml = get_yaml(path)
+    # parse.py already loaded DEVICE_DATA at import; reuse it for the default
+    # path instead of reading and parsing the same YAML a second time.
+    yaml = DEVICE_DATA if path == DEVICE_INFO else get_yaml(path)
     yield from get_devices(yaml)
 
   @classmethod
