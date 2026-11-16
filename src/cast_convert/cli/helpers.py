@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-from collections.abc import AsyncIterable, Iterable
+from collections.abc import Iterable
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from threading import Lock
 from typing import Final, NoReturn
 
-from aiopath import AsyncPath
 from rich import print
 from rich.markup import escape
 from typer import Exit
-from filetype import is_video, is_audio
+from filetype import is_video
 
 from ..core.base import DEFAULT_REPLACE, DEFAULT_THREADS, get_error_handler
 from ..core.convert.run import get_ffmpeg_cmd, get_stream
@@ -23,7 +24,10 @@ from ..core.parse import DEVICE_INFO
 from ..core.types import Peekable
 
 
-GLOB_FILES_RECURSIVE: Final[str] = '**/*.*'
+GLOB_FILES_RECURSIVE: Final[str] = '**/*'
+
+# Workers in inspect/command run in threads; keep each file's output together.
+OUTPUT_LOCK: Final[Lock] = Lock()
 
 
 def show_devices(devices: Devices, details: bool = False):
@@ -64,7 +68,8 @@ def _get_command(
   should_transcode_handled = get_error_handler(should_transcode, UnknownFormat, strategy=error)
 
   if not should_transcode_handled(device, video, subtitle):
-    show_transcode_dismissal(video, device)
+    with OUTPUT_LOCK:
+      show_transcode_dismissal(video, device)
     return False
 
   formats = device.transcode_to(video)
@@ -77,7 +82,8 @@ def _get_command(
     raise Exit(Rc.err)
 
   cmd = get_ffmpeg_cmd(stream, video.path)
-  print(f'[b]{escape(cmd)}')
+  with OUTPUT_LOCK:
+    print(f'[b]{escape(cmd)}')
 
   return True
 
@@ -96,22 +102,24 @@ def _inspect(
   should_transcode_handled = get_error_handler(should_transcode, UnknownFormat, strategy=error)
 
   if not should_transcode_handled(device, video, subtitle):
-    print(f'[green][📁] Encoding properties for [b blue]"{path}"[/]:')
-    tabs(video.formats.text, out=True, tick=True)
-    show_transcode_dismissal(video, device)
+    with OUTPUT_LOCK:
+      print(f'[green][📁] Encoding properties for [b blue]"{path}"[/]:')
+      tabs(video.formats.text, out=True, tick=True)
+      show_transcode_dismissal(video, device)
 
     return False
 
   name = device.name
 
-  print(f'[b red][❌️] Need to convert [b blue]"{esc(video.path)}"[/] to play on [yellow]{name}[/]...[/]')
-  tabs('[b red]Must convert from:', out=True)
-  tabs(video.formats.text, out=True, tick=True)
+  with OUTPUT_LOCK:
+    print(f'[b red][❌️] Need to convert [b blue]"{esc(video.path)}"[/] to play on [yellow]{name}[/]...[/]')
+    tabs('[b red]Must convert from:', out=True)
+    tabs(video.formats.text, out=True, tick=True)
 
-  formats = device.transcode_to(video)
+    formats = device.transcode_to(video)
 
-  tabs('[b green]To:', out=True)
-  tabs(formats.text, out=True, tick=True)
+    tabs('[b green]To:', out=True)
+    tabs(formats.text, out=True, tick=True)
 
   return True
 

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from asyncio import run
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from pathlib import Path
 from typing import Final
 
@@ -137,9 +139,17 @@ def command(
   """
   rc: int = Rc.ok
 
-  for path in paths:
-    if _get_command(name, path, replace, threads, error, subtitle, hwaccel, gpu_pipeline):
-      rc = Rc.must_convert
+  get_command = partial(
+    _get_command, name, replace=replace, threads=threads, error=error,
+    subtitle=subtitle, hardware=hwaccel, gpu_pipeline=gpu_pipeline,
+  )
+
+  # MediaInfo parsing dominates here; inspect files concurrently while
+  # executor.map keeps results (and their output) in path order.
+  with ThreadPoolExecutor() as pool:
+    for must_convert in pool.map(get_command, paths):
+      if must_convert:
+        rc = Rc.must_convert
 
   raise Exit(rc)
 
@@ -190,12 +200,15 @@ def inspect(
   """
   rc: int = Rc.ok
 
-  for path in paths:
+  def inspect_path(path: Path) -> Rc | None:
     if path.is_dir():
-      rc = inspect_directory(name, path, error) or rc
+      return inspect_directory(name, path, error)
 
-    elif _inspect(name, path, error):
-      rc = Rc.must_convert
+    return Rc.must_convert if _inspect(name, path, error) else None
+
+  with ThreadPoolExecutor() as pool:
+    for result in pool.map(inspect_path, paths):
+      rc = result or rc
 
   raise Exit(rc)
 
