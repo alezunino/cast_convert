@@ -140,27 +140,11 @@ def gen_paths(*paths: Path) -> Iterable[Path]:
     yield path
 
 
-async def gen_paths(*paths: Path) -> AsyncIterable[Path]:
-  paths = map(AsyncPath, paths)
-
-  for path in paths:
-    if await path.is_dir():
-      async for path in path.glob(GLOB_FILES_RECURSIVE):
-        yield path
-
-      continue
-
-    yield path
-
-
 def inspect_directory(name: str, path: Path, error: Strategy) -> Rc | None:
-  rc = None
+  """Inspect every video under ``path`` (recursively), in parallel."""
+  files = [file for file in gen_paths(path) if file.is_file() and is_video(file)]
 
-  for path in path.iterdir():
-    if not is_video(path) or not is_audio(path):
-      continue
+  with ThreadPoolExecutor() as pool:
+    results = list(pool.map(lambda file: _inspect(name, file, error), files))
 
-    if _inspect(name, path, error):
-      rc = Rc.must_convert
-
-  return rc
+  return Rc.must_convert if any(results) else None
