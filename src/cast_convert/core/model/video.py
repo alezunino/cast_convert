@@ -34,7 +34,10 @@ class Video(IsCompatible):
   @classmethod
   def from_path(cls, path: Path | str) -> Self:
     path = Path(path)
-    data: MediaInfo = MediaInfo.parse(path)
+    # parse_speed=1.0 reads less of the file while preserving every field we
+    # use below (full=False does not: it drops file_extension and annotates
+    # width/height with " pixels", breaking Resolution/Width conversion).
+    data: MediaInfo = MediaInfo.parse(path, parse_speed=1.0)
 
     [general] = data.general_tracks
     title = general.file_name or general.complete_name
