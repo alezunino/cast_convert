@@ -206,7 +206,7 @@ def transcode_video(
   stream, converted = get_stream(video, formats, threads, replace, subtitle, hardware, gpu_pipeline)
   cmd = get_ffmpeg_cmd(stream, video.path)
 
-  log.info(f'Running command: {cmd}')
+  log.info('Running command: %s', cmd)
 
   try:
     stream.run()  # type: ignore
@@ -343,7 +343,6 @@ def get_output_opts(
   hardware: bool = False,
 ) -> Options:
   opts: Options = DEFAULT_OUTPUT_OPTS.copy()
-  opts[FfmpegOpt.threads] = threads
 
   if (profile := formats.audio_profile) and (codec := profile.codec):
     opts[FfmpegOpt.acodec] = get_encoder(codec)
@@ -459,7 +458,7 @@ def convert_from_name_path(
 
   except Exception as e:
     log.exception(e)
-    log.error(f'Error while converting {video} to {formats}')
+    log.error('Error while converting %s to %s', video, formats)
 
     raise ConversionFailed(f'Error while converting {video}') from e
 

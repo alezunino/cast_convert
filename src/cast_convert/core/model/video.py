@@ -49,7 +49,7 @@ class Video(IsCompatible):
     )
 
     if exts := general.fileextension_invalid:
-      log.error(f"{path} has an invalid file extension, not in: {exts}")
+      log.error('%s has an invalid file extension, not in: %s', path, exts)
 
     if exts and container is Container.unknown:
       container = Container.invalid
@@ -107,7 +107,7 @@ def get_video_profile(data: MediaInfo) -> VideoProfile | None:
   fps = Fps(video.original_frame_rate or video.frame_rate or DEFAULT_VIDEO_FPS)
 
   if not fps and (mode := video.frame_rate_mode):
-    log.warning(f"Assuming variable frame rate: {fps=}, {mode=}")
+    log.warning("Assuming variable frame rate: fps=%s, mode=%s", fps, mode)
     fps = VariableFps
 
   return VideoProfile(
@@ -133,13 +133,13 @@ def profile_to_level(profile: str | None) -> Level:
       return Level(level)
 
     case rest:
-      log.warning(f"Unknown profile format: {rest}, using default.")
+      log.warning("Unknown profile format: %s, using default.", rest)
       return DEFAULT_VIDEO_LEVEL
 
-  log.debug(f"[Encoder profile] '{profile}' -> ({name=}, {level=})")
+  log.debug("[Encoder profile] '%s' -> (name=%s, level=%s)", profile, name, level)
 
   if not (level := normalize(level, str.isnumeric)):
-    log.warning(f"Cannot determine level from {level=}, non-numeric. Using default.")
+    log.warning("Cannot determine level from level=%s, non-numeric. Using default.", level)
     return DEFAULT_VIDEO_LEVEL
 
   match [*level]:
@@ -150,7 +150,7 @@ def profile_to_level(profile: str | None) -> Level:
       small = ''.join(small)
       return Level(f'{big}.{small}')
 
-  log.warning(f"Cannot determine level from {level=}, using default.")
+  log.warning("Cannot determine level from level=%s, using default.", level)
   return DEFAULT_VIDEO_LEVEL
 
 

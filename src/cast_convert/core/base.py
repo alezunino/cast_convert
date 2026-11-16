@@ -62,7 +62,7 @@ def handle_errors(*exceptions: type[Exception], strategy: Strategy = Strategy.qu
 
       except exceptions as e:
         log.exception(e)
-        log.error(f'Failed: {get_name(func)}({args=}, {kwargs=})')
+        log.error('Failed: %s(args=%s, kwargs=%s)', get_name(func), args, kwargs)
 
         match strategy:
           case Strategy.quit:
@@ -70,7 +70,7 @@ def handle_errors(*exceptions: type[Exception], strategy: Strategy = Strategy.qu
             raise Exit(Rc.err) from e
 
           case Strategy.skip:
-            log.warning(f'[{strategy=}] Encountered error: {e}, skipping.')
+            log.warning('[strategy=%s] Encountered error: %s, skipping.', strategy, e)
 
     return decorated
 
@@ -110,7 +110,7 @@ def get_fuzzy_match(
   min_score: int = MIN_FUZZY_MATCH_SCORE,
 ) -> str | None:
   closest, score = process.extractOne(name, items)
-  log.debug(f"Fuzzy match: {name} -> {closest} ({score})")
+  log.debug("Fuzzy match: %s -> %s (%s)", name, closest, score)
 
   if score < min_score:
     return None

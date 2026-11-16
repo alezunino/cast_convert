@@ -100,7 +100,7 @@ def get_default_video_profile(device: Device, video: Video) -> VideoProfile | No
   unique_weights: set[Weight] = set(weights.values())
 
   if len(unique_weights) == ALL_SAME:
-    log.info(f'Choosing first {get_name(VideoProfile)} from {device.name}')
+    log.info('Choosing first %s from %s', get_name(VideoProfile), device.name)
     return first(device.video_profiles)
 
   profile_weights = sorted(weights.items(), key=compare_weight)

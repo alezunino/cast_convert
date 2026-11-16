@@ -67,7 +67,7 @@ def has_items(obj: Any) -> bool:
     items = iter(obj)
 
   except TypeError as e:
-    log.warning(f"[{e}] Can't get an iterator for type {get_name(obj)}")
+    log.warning("[%s] Can't get an iterator for type %s", e, get_name(obj))
     items = obj.__dict__.values()
 
   return any(item is not None for item in items)

@@ -41,7 +41,7 @@ class Container(NormalizedFormat, StrEnum):
     if ext := EXTENSIONS.get(self):
       return ext
 
-    log.warning(f"Can't find {self.name} in {EXTENSIONS=}")
+    log.warning("Can't find %s in EXTENSIONS=%s", self.name, EXTENSIONS)
     return None
 
 

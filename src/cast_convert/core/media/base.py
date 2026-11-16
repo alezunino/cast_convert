@@ -25,17 +25,17 @@ class NormalizedFormat(WithName):
   @classmethod
   def _missing_(cls: Type[Self], value: str) -> Self:
     name = get_name(cls)
-    log.info(f"[{name}] Missing: {value}")
+    log.info("[%s] Missing: %s", name, value)
 
     if alias := getattr(cls, value, None):
-      log.info(f"[{name}] Using {alias} as an alias for {value}")
+      log.info("[%s] Using %s as an alias for %s", name, alias, value)
       return alias
 
     if alias := ALIAS_FMTS.get(value):
-      log.info(f"[{name}] Using {alias} as an alias for {value}")
+      log.info("[%s] Using %s as an alias for %s", name, alias, value)
       return cls(alias)
 
-    log.info(f"[{name}] Not found, using `unknown` instead of {value}")
+    log.info("[%s] Not found, using `unknown` instead of %s", name, value)
     return cls.unknown
 
   @classmethod
@@ -43,14 +43,14 @@ class NormalizedFormat(WithName):
     name = get_name(cls)
 
     if not info:
-      log.info(f"[{name}] no info supplied: {info}")
+      log.info("[%s] no info supplied: %s", name, info)
       return cls.unknown
 
     if not isinstance(info, str):
       raise TypeError(f"[{name}] Can't normalize: {info}")
 
     normalized = normalize(info)
-    log.debug(f'{name}({info}) normalized as {name}({normalized})')
+    log.debug('%s(%s) normalized as %s(%s)', name, info, name, normalized)
 
     return cls(normalized)
 
