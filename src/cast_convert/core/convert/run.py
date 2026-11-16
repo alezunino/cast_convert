@@ -354,6 +354,13 @@ def get_output_opts(
   if subtitle := formats.subtitle:
     opts[FfmpegOpt.scodec] = get_encoder(subtitle)
 
+  if str(opts.get(FfmpegOpt.vcodec, '')).endswith(VAAPI_SUFFIX):
+    # VAAPI encodes on the GPU and ignores -threads; leaving it out keeps
+    # the command clean and avoids misleading thread limits.
+    opts.pop(FfmpegOpt.threads, None)
+  else:
+    opts[FfmpegOpt.threads] = threads
+
   if not profile:
     return opts
 

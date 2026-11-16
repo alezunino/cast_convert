@@ -285,10 +285,10 @@ Sets what happens when a file fails to convert:
 ╭─ 🖥 Encoder Options ──────────────────────────────────────────────────────────────────────────────╮
 │ --replace       -r                               💾 Replace original file with transcoded video. │
 │ --jobs          -j                       <int>   🔢 Number of simultaneous transcoding jobs.     │
-│                                                  [default: 2]                                    │
+│                                                  [default: auto (½ CPUs, max 4)]                 │
 │ --threads       -t                       <int>   🧵 Number of threads to tell FFMPEG to use per  │
 │                                                  job.                                            │
-│                                                  [default: 4]                                    │
+│                                                  [default: auto (CPUs / jobs)]                  │
 │ --subtitle      -s                       <path>  Path to subtitle file to embed.                 │
 │ --hwaccel           --no-hwaccel                 🎮 Use VAAPI hardware encoding when available.  │
 │                                                  Use --no-hwaccel to force software encoding.    │
@@ -320,11 +320,11 @@ Sets what happens when a file fails to convert:
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ 🖥 Encoder Options ──────────────────────────────────────────────────────────────────────────────╮
 │ --jobs          -j                       <int>   🔢 Number of simultaneous transcoding jobs.     │
-│                                                  [default: 2]                                    │
+│                                                  [default: auto (½ CPUs, max 4)]                 │
 │ --replace       -r                               💾 Replace original file with transcoded video. │
 │ --threads       -t                       <int>   🧵 Number of threads to tell FFMPEG to use per  │
 │                                                  job.                                            │
-│                                                  [default: 4]                                    │
+│                                                  [default: auto (CPUs / jobs)]                  │
 │ --subtitle      -s                       <path>  Path to subtitle file to embed.                 │
 │ --hwaccel           --no-hwaccel                 🎮 Use VAAPI hardware encoding when available.  │
 │                                                  Use --no-hwaccel to force software encoding.    │
@@ -358,7 +358,7 @@ Sets what happens when a file fails to convert:
 │ --replace       -r                               💾 Replace original file with transcoded video. │
 │ --threads       -t                       <int>   🧵 Number of threads to tell FFMPEG to use per  │
 │                                                  job.                                            │
-│                                                  [default: 4]                                    │
+│                                                  [default: auto (CPUs / jobs)]                  │
 │ --subtitle      -s                       <path>  Path to subtitle file to embed.                 │
 │ --hwaccel           --no-hwaccel                 🎮 Use VAAPI hardware encoding when available.  │
 │                                                  Use --no-hwaccel to force software encoding.    │

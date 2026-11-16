@@ -26,7 +26,10 @@ log = logging.getLogger(__name__)
 
 DEFAULT_MODEL: Final[str] = 'Chromecast 1st Gen'
 DEFAULT_REPLACE: Final[bool] = False
-DEFAULT_JOBS: Final[int] = 2
+# Software encoding is CPU-bound: run a few jobs, each with a share of the
+# cores (see THREAD_COUNT in cli.commands). VAAPI encodes on the GPU, where
+# extra jobs are cheap, so the cap of 4 avoids starving non-GPU systems.
+DEFAULT_JOBS: Final[int] = max(1, min(cpu_count() // 2, 4))
 DEFAULT_THREADS: Final[int] = cpu_count()
 
 AT: Final[str] = '@'
