@@ -77,20 +77,24 @@ async def wait_for_stable_size(
       previous = NO_SIZE
 
 
-async def is_video(path: Path) -> bool:
+async def is_video(path: Path) -> Video | None:
+  """Parse ``path`` once and return its Video, or None if it isn't a video.
+
+  Returning the parsed Video lets the caller reuse it for the conversion,
+  avoiding a second (expensive) MediaInfo parse of the same file.
+  """
   try:
     video = await to_thread(Video.from_path, path)
 
   except Exception as e:
-    log.exception(e)
-    log.error(f'Not a video: {path}')
-    return False
+    log.debug('Not a video: %s (%s)', path, e)
+    return None
 
   if video.formats.video_profile:
-    return True
+    return video
 
-  log.error(f'Not a video: {path}')
-  return False
+  log.error('Not a video: %s', path)
+  return None
 
 
 def get_new_path(file: str, change: Change, seen: Paths) -> Path | None:
@@ -134,12 +138,13 @@ async def convert(
   async with sem:
     await gather(wait_for_stable_size(path), wait_until_closed(path))
 
-    if not await is_video(path):
+    if not (video := await is_video(path)):
       return None
 
     try:
       return await to_thread(
-        convert_from_name_path, device, path, replace, threads, subtitle, hardware, gpu_pipeline,
+        convert_from_name_path, device, path, replace, threads, subtitle, hardware,
+        gpu_pipeline, video,
       )
     except ConversionFailed:
       return None

@@ -430,8 +430,11 @@ def convert_from_name_path(
   subtitle: Path | None = None,
   hardware: bool = True,
   gpu_pipeline: bool = False,
+  video: Video | None = None,
 ) -> Video | None:
-  video = Video.from_path(path)
+  # Reuse an already-parsed Video when supplied (watch mode parses the file
+  # once to check whether it's a video, then hands it off for conversion).
+  video = video or Video.from_path(path)
   device = load_device_with_name(name)
 
   if not should_transcode(device, video, subtitle):
