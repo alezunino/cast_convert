@@ -20,20 +20,22 @@ log = logging.getLogger(__name__)
 
 
 def is_open_in_proc(file: Path | str) -> bool:
-  file = Path(file)
+  """Return whether any process currently has ``file`` open.
+
+  This scans /proc, so it must be run off the event loop (see
+  ``wait_until_closed``).  Comparing paths directly instead of building a
+  set of ``Path`` objects for every open file descriptor keeps the scan
+  cheap, and only the relevant psutil errors are handled at debug level.
+  """
+  target = Path(file)
 
   for proc in psutil.process_iter():
-    files = set[Path]()
-
     try:
-      files = {Path(f.path) for f in proc.open_files()}
+      if any(Path(f.path) == target for f in proc.open_files()):
+        return True
 
-    except Exception as e:
-      log.exception(e)
-      log.error(f"Couldn't read open files for {proc.pid} {proc.name()}, continuing.")
-
-    if file in files:
-      return True
+    except (psutil.AccessDenied, psutil.NoSuchProcess, OSError) as e:
+      log.debug("Can't read open files for %s: %s", proc.pid, e)
 
   return False
 
@@ -44,7 +46,9 @@ async def wait_until_closed(
 ) -> Path:
   file = Path(file)
 
-  while is_open_in_proc(file):
+  # is_open_in_proc() scans every process; run it in a worker thread so it
+  # never blocks other concurrent conversions on the event loop.
+  while await to_thread(is_open_in_proc, file):
     await sleep(wait)
 
   return file
