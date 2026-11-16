@@ -56,14 +56,18 @@ def transcode_video(
   device: Device,
   video: Video,
   default_video: VideoProfile | None = None,
+  can_play: bool | None = None,
 ) -> TranscodeVideoProfile | None:
-  if device.can_play_video(video):
+  if can_play is None:
+    can_play = device.can_play_video(video)
+
+  if can_play:
     return None
 
   _, video_profile, *_ = video.formats
 
   if not video_profile:
-    log.warning(f"{video} has no VideoProfile")
+    log.warning("%s has no VideoProfile", video)
     return None
 
   if not default_video:
@@ -112,14 +116,18 @@ def transcode_audio(
   device: Device,
   video: Video,
   default_audio: AudioProfile | None = None,
+  can_play: bool | None = None,
 ) -> AudioProfile | None:
-  if device.can_play_audio(video):
+  if can_play is None:
+    can_play = device.can_play_audio(video)
+
+  if can_play:
     return None
 
   *_, audio_profile, _ = video.formats
 
   if not default_audio:
-    log.info(f'Choosing first {get_name(AudioProfile)} from {device.name}')
+    log.info('Choosing first %s from %s', get_name(AudioProfile), device.name)
     default_audio = first(device.audio_profiles)
 
   return transcode_audio_profile(audio_profile, default_audio)
@@ -129,14 +137,18 @@ def transcode_container(
   device: Device,
   video: Video,
   default_container: Container | None = None,
+  can_play: bool | None = None,
 ) -> Container | None:
-  if device.can_play_container(video):
+  if can_play is None:
+    can_play = device.can_play_container(video)
+
+  if can_play:
     return None
 
   container, *_ = video.formats
 
   if not default_container:
-    log.info(f'Choosing first {get_name(Container)} from {device.name}')
+    log.info('Choosing first %s from %s', get_name(Container), device.name)
     default_container = first(device.containers)
 
   return transcode_containers(container, default_container)
@@ -146,14 +158,18 @@ def transcode_subtitle(
   device: Device,
   video: Video,
   default_subtitle: Subtitle | None = None,
+  can_play: bool | None = None,
 ) -> Subtitle | None:
-  if device.can_play_subtitle(video):
+  if can_play is None:
+    can_play = device.can_play_subtitle(video)
+
+  if can_play:
     return None
 
   *_, subtitle = video.formats
 
   if not default_subtitle:
-    log.info(f'Choosing first {get_name(Subtitle)} from {device.name}')
+    log.info('Choosing first %s from %s', get_name(Subtitle), device.name)
     default_subtitle = first(device.subtitles)
 
   return transcode_subtitles(subtitle, default_subtitle)
@@ -167,13 +183,21 @@ def transcode_to(
   default_container: Container | None = None,
   default_subtitle: Subtitle | None = None,
 ) -> TranscodeFormats | None:
-  if device.can_play(video):
+  # Evaluate compatibility once, then hand the results to each helper. This
+  # avoids repeating the same four checks in device.can_play() and again in
+  # every transcode_*() call.
+  can_audio = device.can_play_audio(video)
+  can_video = device.can_play_video(video)
+  can_container = device.can_play_container(video)
+  can_subtitle = device.can_play_subtitle(video)
+
+  if can_audio and can_video and can_container and can_subtitle:
     return None
 
-  new_video = transcode_video(device, video, default_video)
-  new_audio = transcode_audio(device, video, default_audio)
-  new_container = transcode_container(device, video, default_container)
-  new_subtitle = transcode_subtitle(device, video, default_subtitle)
+  new_video = transcode_video(device, video, default_video, can_play=can_video)
+  new_audio = transcode_audio(device, video, default_audio, can_play=can_audio)
+  new_container = transcode_container(device, video, default_container, can_play=can_container)
+  new_subtitle = transcode_subtitle(device, video, default_subtitle, can_play=can_subtitle)
 
   return TranscodeFormats(
     container=new_container,
