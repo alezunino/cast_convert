@@ -13,7 +13,7 @@ from rich import print
 from ..base import first
 from ..protocols import get_name
 from ..fmt import esc
-from ..media.codecs import Container, Subtitle
+from ..media.codecs import Codecs, Container, Subtitle, container_supports_codec
 from ..media.formats import Formats
 from ..media.profiles import AudioProfile, Profile, VideoProfile, is_codec_compatible, \
   is_fps_compatible, is_level_compatible, is_resolution_compatible
@@ -28,6 +28,7 @@ log = logging.getLogger(__name__)
 
 SCORE_INDEX: Final[int] = 1
 ALL_SAME: Final[int] = 1
+FALLBACK_CONTAINER: Final[Container] = Container.matroska
 
 
 type Weight = int
@@ -175,6 +176,40 @@ def transcode_subtitle(
   return transcode_subtitles(subtitle, default_subtitle)
 
 
+def get_output_codecs(
+  video: Video,
+  new_video: VideoProfile | None,
+  new_audio: AudioProfile | None,
+  new_subtitle: Subtitle | None,
+) -> tuple[Codecs | Subtitle | None, ...]:
+  """Codecs the output file will contain, after any planned transcoding."""
+  _, source_video, source_audio, source_subtitle = video.formats
+
+  video_codec = (new_video.codec if new_video and new_video.codec
+                 else source_video.codec if source_video else None)
+  audio_codec = (new_audio.codec if new_audio and new_audio.codec
+                 else source_audio.codec if source_audio else None)
+  subtitle_codec = new_subtitle or source_subtitle
+
+  return video_codec, audio_codec, subtitle_codec
+
+
+def get_compatible_container(
+  container: Container | None,
+  codecs: tuple[Codecs | Subtitle | None, ...],
+  candidates: Iterable[Container],
+) -> Container | None:
+  """Pick a container able to carry every output codec."""
+  if all(container_supports_codec(container, codec) for codec in codecs):
+    return container
+
+  for candidate in candidates:
+    if all(container_supports_codec(candidate, codec) for codec in codecs):
+      return candidate
+
+  return FALLBACK_CONTAINER
+
+
 def transcode_to(
   device: Device,
   video: Video,
@@ -198,6 +233,17 @@ def transcode_to(
   new_audio = transcode_audio(device, video, default_audio, can_play=can_audio)
   new_container = transcode_container(device, video, default_container, can_play=can_container)
   new_subtitle = transcode_subtitle(device, video, default_subtitle, can_play=can_subtitle)
+
+  # The source container may not hold the *new* codecs even though the device
+  # accepts it (e.g. WebM cannot mux AVC). Pick a container that fits the
+  # output codecs; get_new_path() then uses its extension for the output.
+  source_container = video.formats.container
+  output_container = get_compatible_container(
+    new_container or source_container,
+    get_output_codecs(video, new_video, new_audio, new_subtitle),
+    device.containers,
+  )
+  new_container = None if output_container is source_container else output_container
 
   return TranscodeFormats(
     container=new_container,

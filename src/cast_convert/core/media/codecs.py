@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import logging
 from enum import Enum, StrEnum, auto
+from functools import cache
 from typing import Self
 
 from .base import NormalizedFormat
 from ..base import SUBTITLE_SEP
-from ..parse import EXTENSIONS, Extension
+from ..parse import CODEC_CONTAINER_COMPAT, EXTENSIONS, Extension
 
 
 log = logging.getLogger(__name__)
@@ -126,3 +127,32 @@ type Codecs = AudioCodec | VideoCodec
 
 Containers = list[Container]
 Subtitles = list[Subtitle]
+
+
+@cache
+def containers_for_codec(codec: Codecs | Subtitle) -> frozenset[Container]:
+  """Containers declared as compatible with ``codec`` (cached)."""
+  return frozenset(
+    Container.from_info(name)
+    for name in CODEC_CONTAINER_COMPAT.get(str(codec), ())
+  )
+
+
+def container_supports_codec(
+  container: Container | None,
+  codec: Codecs | Subtitle | None,
+) -> bool:
+  """Whether ``container`` can carry ``codec``.
+
+  Codecs with no declared restriction are treated as compatible, so unknown
+  or not-yet-mapped codecs never trigger a spurious container change.
+  """
+  if not container or container in (Container.unknown, Container.invalid):
+    return True
+
+  if not codec:
+    return True
+
+  containers = containers_for_codec(codec)
+
+  return not containers or container in containers

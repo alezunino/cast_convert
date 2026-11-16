@@ -41,6 +41,9 @@ DEVICE_DATA: Final[Yaml] = get_yaml()
 
 EXTENSIONS: Final[FmtExtensions] = DEVICE_DATA['extensions']
 
+# Codecs -> container names that can carry them (see media.codecs).
+CODEC_CONTAINER_COMPAT: Final[dict[Fmt, Fmts]] = DEVICE_DATA.get('codec_container_compat') or {}
+
 ENCODERS: Final[FfmpegCodecs] = DEVICE_DATA['encoders']
 VIDEO_ENCODERS: Final[FmtAliases] = ENCODERS['video']
 AUDIO_ENCODERS: Final[FmtAliases] = ENCODERS['audio']

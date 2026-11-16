@@ -59,7 +59,39 @@ extensions:
 
 
 codec_container_compat:
-  #
+  # Containers that can carry each codec. Used when transcoding changes a
+  # codec but not the container (e.g. VP9 -> AVC in WebM), since the source
+  # container may not support the new codec.
+  # Video
+  avc: [avi, matroska, mp2t, mp4]
+  hevc: [matroska, mp2t, mp4]
+  mpeg4: [avi, matroska, mp4]
+  div3: [avi, matroska]
+  xvid: [avi, matroska, mp4]
+  vp8: [matroska, ogg, webm]
+  vp9: [matroska, ogg, webm]
+  # Audio
+  aac: [matroska, mp2t, mp4]
+  heaac: [matroska, mp2t, mp4]
+  lcaac: [matroska, mp2t, mp4]
+  ac3: [avi, matroska, mp2t, mp4]
+  eac3: [matroska, mp2t, mp4]
+  dts: [matroska, mp2t]
+  flac: [matroska, ogg]
+  mp3: [avi, matroska, mp2t, mp3, mp4]
+  mpegaudio: [avi, matroska, mp2t, mp3, mp4]
+  opus: [matroska, ogg, webm]
+  vorbis: [matroska, ogg, webm]
+  wav: [matroska, wav]
+  wma: [avi, matroska]
+  # Subtitles
+  ass: [matroska, mp4]
+  eia608: [matroska, mp2t, mp4]
+  eia708: [matroska, mp2t, mp4]
+  srt: [matroska, mp4]
+  ssa: [matroska, mp4]
+  ttml: [matroska, mp4]
+  webvtt: [matroska, mp4, webm]
 
 
 # map of codecs to ffmpeg encoders
