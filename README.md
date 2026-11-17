@@ -264,6 +264,16 @@ Sets what happens when a file fails to convert:
 
 `watch` always keeps running after a failed file.
 
+#### `--verbose`
+
+By default, `convert` and `watch` show a compact progress bar for each file with its completion percentage, and drive the terminal's OSC 9;4 progress bar with the average across active jobs. Terminals that don't support OSC 9;4 simply ignore those sequences.
+
+Use `--verbose` to show the full FFmpeg output instead:
+
+```bash
+$ cast-convert convert --verbose --name 'Roku HD' ~/video.mkv
+```
+
 ### Commands
 
 #### `convert`
@@ -296,6 +306,8 @@ Sets what happens when a file fails to convert:
 │                                                  Requires VAAPI decoding for the source codec    │
 │                                                  (checked with vainfo). Unsupported files fail   │
 │                                                  with an error, handled by --error.              │
+│ --verbose                                        📊 Show full FFmpeg output instead of a         │
+│                                                  progress bar.                                  │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ 📊 Analyze ─────────────────────────────────────────────────────────────────────────────────────╮
 │ --error  -e      <quit|skip|force>  ❗ Set the error handling strategy. [default: quit]          │
@@ -332,6 +344,8 @@ Sets what happens when a file fails to convert:
 │                                                  Requires VAAPI decoding for the source codec    │
 │                                                  (checked with vainfo). Unsupported files fail   │
 │                                                  with an error, handled by --error.              │
+│ --verbose                                        📊 Show full FFmpeg output instead of a         │
+│                                                  progress bar.                                  │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ 📊 Analyze ─────────────────────────────────────────────────────────────────────────────────────╮
 │ --error  -e      <quit|skip|force>  ❗ Set the error handling strategy. [default: quit]          │

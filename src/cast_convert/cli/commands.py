@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from asyncio import run
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import nullcontext
 from functools import partial
 from pathlib import Path
 from typing import Final
@@ -16,6 +17,7 @@ from ..core.base import DEFAULT_JOBS, DEFAULT_LOG_LEVEL, DEFAULT_MODEL, \
   DEFAULT_THREADS, bad_file_exit, setup_logging
 from ..core.enums import LogLevel, Rc, Strategy
 
+from ..core.convert.progress import ProgressReporter
 from ..core.convert.run import convert_paths
 from ..core.convert.watch import convert_videos
 from ..core.model.device import get_devices_from_file
@@ -105,6 +107,13 @@ DEFAULT_GPU_PIPELINE_OPT: Final[OptionInfo] = Option(
   show_default=False,
 )
 
+DEFAULT_VERBOSE_OPT: Final[OptionInfo] = Option(
+  False,
+  '--verbose',
+  help='Show full FFmpeg output instead of a progress bar.',
+  show_default=True,
+)
+
 LONG_DESCRIPTION: Final[str] = f"""
 {DESCRIPTION}
 
@@ -168,22 +177,25 @@ def convert(
   subtitle: Path | None = DEFAULT_SUBTITLE_OPT,
   hwaccel: bool = DEFAULT_HWACCEL_OPT,
   gpu_pipeline: bool = DEFAULT_GPU_PIPELINE_OPT,
+  verbose: bool = DEFAULT_VERBOSE_OPT,
 ):
   """
   Convert videos so that they're compatible with the specified device.
   """
-  coro = convert_paths(
-    name,
-    replace,
-    threads,
-    jobs,
-    *paths,
-    strategy=error,
-    subtitle=subtitle,
-    hardware=hwaccel,
-    gpu_pipeline=gpu_pipeline,
-  )
-  run(coro)
+  with nullcontext() if verbose else ProgressReporter() as reporter:
+    coro = convert_paths(
+      name,
+      replace,
+      threads,
+      jobs,
+      *paths,
+      strategy=error,
+      subtitle=subtitle,
+      hardware=hwaccel,
+      gpu_pipeline=gpu_pipeline,
+      reporter=reporter,
+    )
+    run(coro)
 
 
 @cli.command(
@@ -240,22 +252,25 @@ def watch(
   subtitle: Path | None = DEFAULT_SUBTITLE_OPT,
   hwaccel: bool = DEFAULT_HWACCEL_OPT,
   gpu_pipeline: bool = DEFAULT_GPU_PIPELINE_OPT,
+  verbose: bool = DEFAULT_VERBOSE_OPT,
 ):
   """
   Watch directories for new or modified videos and convert them.
   """
-  coro = convert_videos(
-    *paths,
-    device=name,
-    jobs=jobs,
-    replace=replace,
-    threads=threads,
-    error=error,
-    subtitle=subtitle,
-    hardware=hwaccel,
-    gpu_pipeline=gpu_pipeline,
-  )
-  run(coro)
+  with nullcontext() if verbose else ProgressReporter() as reporter:
+    coro = convert_videos(
+      *paths,
+      device=name,
+      jobs=jobs,
+      replace=replace,
+      threads=threads,
+      error=error,
+      subtitle=subtitle,
+      hardware=hwaccel,
+      gpu_pipeline=gpu_pipeline,
+      reporter=reporter,
+    )
+    run(coro)
 
 
 @cli.callback(

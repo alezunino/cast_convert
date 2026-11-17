@@ -7,6 +7,7 @@ import psutil
 from aiopath import AsyncPath
 from watchfiles import Change, awatch
 
+from .progress import ProgressReporter
 from .run import convert_from_name_path
 from ..base import DEFAULT_JOBS, DEFAULT_MODEL, DEFAULT_REPLACE, DEFAULT_THREADS, \
   FILESIZE_CHECK_WAIT, NO_SIZE, get_error_handler
@@ -132,6 +133,7 @@ async def convert(
   subtitle: Path | None = None,
   hardware: bool = True,
   gpu_pipeline: bool = False,
+  reporter: ProgressReporter | None = None,
 ) -> Video | None:
   path = path.absolute()
 
@@ -144,7 +146,7 @@ async def convert(
     try:
       return await to_thread(
         convert_from_name_path, device, path, replace, threads, subtitle, hardware,
-        gpu_pipeline, video,
+        gpu_pipeline, video, reporter,
       )
     except ConversionFailed:
       return None
@@ -161,6 +163,7 @@ async def convert_videos(
   subtitle: Path | None = None,
   hardware: bool = True,
   gpu_pipeline: bool = False,
+  reporter: ProgressReporter | None = None,
 ):
   if seen is None:
     seen = Paths()
@@ -170,5 +173,7 @@ async def convert_videos(
 
   async with TaskGroup() as tg:
     async for path in gen_new_files(*paths, seen=seen):
-      coro = handled_converter(device, path, sem, replace, threads, subtitle, hardware, gpu_pipeline)
+      coro = handled_converter(
+        device, path, sem, replace, threads, subtitle, hardware, gpu_pipeline, reporter,
+      )
       tg.create_task(coro)

@@ -14,6 +14,7 @@ from typing import Final
 import ffmpeg
 from ffmpeg.nodes import FilterableStream, OutputStream
 
+from .progress import ProgressReporter, get_duration_ms
 from .transcode import should_transcode, show_transcode_dismissal
 from ..base import DEFAULT_REPLACE, DEFAULT_THREADS, JOIN_COMMAND, first, get_error_handler
 from ..enums import Strategy
@@ -202,6 +203,7 @@ def transcode_video(
   subtitle: Path | None = None,
   hardware: bool = True,
   gpu_pipeline: bool = False,
+  reporter: ProgressReporter | None = None,
 ) -> Video:
   stream, converted = get_stream(video, formats, threads, replace, subtitle, hardware, gpu_pipeline)
   cmd = get_ffmpeg_cmd(stream, video.path)
@@ -209,14 +211,17 @@ def transcode_video(
   log.info('Running command: %s', cmd)
 
   try:
-    stream.run()  # type: ignore
+    if reporter is None:
+      stream.run()  # type: ignore
+    else:
+      reporter.run(stream, video.path.name, get_duration_ms(video))
 
   except ffmpeg.Error:
     if not hardware or gpu_pipeline or VAAPI_SUFFIX not in cmd:
       raise
 
     log.warning('VAAPI encoding failed, retrying with software encoding')
-    return transcode_video(video, formats, replace, threads, subtitle, hardware=False)
+    return transcode_video(video, formats, replace, threads, subtitle, hardware=False, reporter=reporter)
 
   original: Path = video.path
 
@@ -437,6 +442,7 @@ def convert_from_name_path(
   hardware: bool = True,
   gpu_pipeline: bool = False,
   video: Video | None = None,
+  reporter: ProgressReporter | None = None,
 ) -> Video | None:
   # Reuse an already-parsed Video when supplied (watch mode parses the file
   # once to check whether it's a video, then hands it off for conversion).
@@ -451,7 +457,7 @@ def convert_from_name_path(
     return None
 
   try:
-    return transcode_video(video, formats, replace, threads, subtitle, hardware, gpu_pipeline)
+    return transcode_video(video, formats, replace, threads, subtitle, hardware, gpu_pipeline, reporter)
 
   except GpuPipelineError:
     raise
@@ -473,6 +479,7 @@ async def convert_paths(
   subtitle: Path | None = None,
   hardware: bool = True,
   gpu_pipeline: bool = False,
+  reporter: ProgressReporter | None = None,
 ):
   sem = BoundedSemaphore(jobs)
   handled_converter = get_error_handler(
@@ -485,7 +492,10 @@ async def convert_paths(
 
   async def convert(path: Path):
     async with sem:
-      await to_thread(handled_converter, name, path, replace, threads, subtitle, hardware, gpu_pipeline)
+      await to_thread(
+        handled_converter, name, path, replace, threads, subtitle, hardware, gpu_pipeline,
+        reporter=reporter,
+      )
 
   async with TaskGroup() as tg:
     for path in paths:
