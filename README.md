@@ -145,35 +145,31 @@ $ cast-convert --help
 ### Options and commands
 
 ```bash
- Usage: cast-convert [OPTIONS] COMMAND [ARGS]...
+Usage: cast-convert [OPTIONS] COMMAND [ARGS]...
 
- 📽️ Identify and convert videos to formats that are Chromecast supported.
+  Identify and convert videos to formats that are Chromecast supported.
 
- See https://github.com/alexdelorenzo/cast_contvert for more information.
- Copyright © 2023 Alex DeLorenzo (https://alexdelorenzo.dev), © 2026 Alejandro Zunino (https://users.exa.unicen.edu.ar/~azunino/). License: AGPL-3.0
+  See https://github.com/alexdelorenzo/cast_convert for more information.
+  Copyright © 2023 Alex DeLorenzo (https://alexdelorenzo.dev), © 2026
+  Alejandro Zunino (https://users.exa.unicen.edu.ar/~azunino/). License:
+  AGPL-3.0
 
-╭─ Options ────────────────────────────────────────────────────────────────────────────────────────╮
-│ --install-completion          Install completion for the current shell.                          │
-│ --show-completion             Show completion for the current shell, to copy it or customize the │
-│                               installation.                                                      │
-│ --help                        Show this message and exit.                                        │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ ❓ About ───────────────────────────────────────────────────────────────────────────────────────╮
-│ --log-level  -l      <debug|info|warn|error|critical|fata  🪵 Set the minimum logging level.     │
-│                      l>                                    [default: warn]                       │
-│ --version    -v                                            🔢 Show application version and quit. │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ 📊 Analyze ─────────────────────────────────────────────────────────────────────────────────────╮
-│ command   📜 Get FFmpeg transcoding command.                                                     │
-│ inspect   🔎 Inspect videos to see what attributes should get transcoded.                        │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ 📽️ Convert ──────────────────────────────────────────────────────────────────────────────────────╮
-│ convert   📼 Convert videos so that they're compatible with specified device.                    │
-│ watch     👀 Watch directories for new or modified videos and convert them.                      │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ 🛠️ Hardware Support ─────────────────────────────────────────────────────────────────────────────╮
-│ devices   📺 List all supported devices.                                                         │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+Options:
+  -l, --log-level <debug|info|warn|error|critical|fatal>
+                                  Set the minimum logging level.  [default:
+                                  warn]
+  -v, --version                   Show application version and quit.
+  --install-completion            Install completion for the current shell.
+  --show-completion               Show completion for the current shell, to
+                                  copy it or customize the installation.
+  --help                          Show this message and exit.
+
+Commands:
+  command  Get the FFmpeg transcoding command for each video.
+  convert  Convert videos so that they're compatible with the specified...
+  inspect  Inspect videos to see which attributes would be transcoded.
+  devices  List all supported devices.
+  watch    Watch directories for new or modified videos and convert them.
 ```
 
 ### Parameters
@@ -294,145 +290,124 @@ $ cast-convert convert --verbose --name 'Roku HD' ~/video.mkv
 #### `convert`
 
 ```bash
- Usage: cast-convert convert [OPTIONS] {📂PATHS}
+Usage: cast-convert convert [OPTIONS] {PATHS}
 
- 📼 Convert videos so that they're compatible with specified device.
+  Convert videos so that they're compatible with the specified device.
 
-╭─ Arguments ──────────────────────────────────────────────────────────────────────────────────────╮
-│ *    📂PATHS      <path>  Path(s) to video(s). [required]                                        │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Options ────────────────────────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                                      │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ 📺 Device ──────────────────────────────────────────────────────────────────────────────────────╮
-│ --name  -n      <str>  📛 Device model name [default: Chromecast 1st Gen]                        │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ 🖥 Encoder Options ──────────────────────────────────────────────────────────────────────────────╮
-│ --replace       -r                               💾 Replace original file with transcoded video. │
-│ --jobs          -j                       <int>   🔢 Number of simultaneous transcoding jobs.     │
-│                                                  [default: auto (½ CPUs, max 4)]                 │
-│ --threads       -t                       <int>   🧵 Number of threads to tell FFMPEG to use per  │
-│                                                  job.                                            │
-│                                                  [default: auto (CPUs / jobs)]                  │
-│ --subtitle      -s                       <path>  Path to subtitle file to embed.                 │
-│ --hwaccel           --no-hwaccel                 🎮 Use VAAPI hardware encoding when available.  │
-│                                                  Use --no-hwaccel to force software encoding.    │
-│ --gpu-pipeline      --no-gpu-pipeline            🚀 Decode and encode on the GPU with VAAPI.     │
-│                                                  Requires VAAPI decoding for the source codec    │
-│                                                  (checked with vainfo). Unsupported files fail   │
-│                                                  with an error, handled by --error.              │
-│ --verbose                                        📊 Show full FFmpeg output instead of a         │
-│                                                  progress bar.                                  │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ 📊 Analyze ─────────────────────────────────────────────────────────────────────────────────────╮
-│ --error  -e      <quit|skip|force>  ❗ Set the error handling strategy. [default: quit]          │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+Arguments:
+  PATHS  Path(s) to video(s).  [required]
+
+Options:
+  -n, --name <str>                Device model name.  [default: Chromecast 1st
+                                  Gen]
+  -r, --replace                   Replace original file with transcoded video.
+  -j, --jobs <int>                Number of simultaneous transcoding jobs.
+                                  [default: 4]
+  -t, --threads <int>             Number of threads to tell FFMPEG to use per
+                                  job.  [default: 2]
+  -e, --error <quit|skip|force>   Set the error handling strategy.  [default:
+                                  quit]
+  -s, --subtitle <path>           Path to subtitle file to embed.
+  --hwaccel / --no-hwaccel        Use VAAPI hardware encoding when available.
+                                  Use --no-hwaccel to force software encoding.
+  --gpu-pipeline / --no-gpu-pipeline
+                                  Decode and encode on the GPU with VAAPI.
+                                  Requires VAAPI decoding for the source codec
+                                  (checked with vainfo). Unsupported files
+                                  fail with an error, handled by --error.
+  --verbose                       Show full FFmpeg output instead of a
+                                  progress bar.
+  --help                          Show this message and exit.
 ```
 
 #### `watch`
 
 ```bash
- Usage: cast-convert watch [OPTIONS] {📂PATHS}
+Usage: cast-convert watch [OPTIONS] {PATHS}
 
- 👀 Watch directories for new or modified videos and convert them.
+  Watch directories for new or modified videos and convert them.
 
-╭─ Arguments ──────────────────────────────────────────────────────────────────────────────────────╮
-│ *    📂PATHS      <path>  Path(s) to video(s). [required]                                        │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Options ────────────────────────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                                      │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ 📺 Device ──────────────────────────────────────────────────────────────────────────────────────╮
-│ --name  -n      <str>  📛 Device model name [default: Chromecast 1st Gen]                        │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ 🖥 Encoder Options ──────────────────────────────────────────────────────────────────────────────╮
-│ --jobs          -j                       <int>   🔢 Number of simultaneous transcoding jobs.     │
-│                                                  [default: auto (½ CPUs, max 4)]                 │
-│ --replace       -r                               💾 Replace original file with transcoded video. │
-│ --threads       -t                       <int>   🧵 Number of threads to tell FFMPEG to use per  │
-│                                                  job.                                            │
-│                                                  [default: auto (CPUs / jobs)]                  │
-│ --subtitle      -s                       <path>  Path to subtitle file to embed.                 │
-│ --hwaccel           --no-hwaccel                 🎮 Use VAAPI hardware encoding when available.  │
-│                                                  Use --no-hwaccel to force software encoding.    │
-│ --gpu-pipeline      --no-gpu-pipeline            🚀 Decode and encode on the GPU with VAAPI.     │
-│                                                  Requires VAAPI decoding for the source codec    │
-│                                                  (checked with vainfo). Unsupported files fail   │
-│                                                  with an error, handled by --error.              │
-│ --verbose                                        📊 Show full FFmpeg output instead of a         │
-│                                                  progress bar.                                  │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ 📊 Analyze ─────────────────────────────────────────────────────────────────────────────────────╮
-│ --error  -e      <quit|skip|force>  ❗ Set the error handling strategy. [default: quit]          │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+Arguments:
+  PATHS  Path(s) to video(s).  [required]
+
+Options:
+  -n, --name <str>                Device model name.  [default: Chromecast 1st
+                                  Gen]
+  -j, --jobs <int>                Number of simultaneous transcoding jobs.
+                                  [default: 4]
+  -r, --replace                   Replace original file with transcoded video.
+  -t, --threads <int>             Number of threads to tell FFMPEG to use per
+                                  job.  [default: 2]
+  -e, --error <quit|skip|force>   Set the error handling strategy.  [default:
+                                  quit]
+  -s, --subtitle <path>           Path to subtitle file to embed.
+  --hwaccel / --no-hwaccel        Use VAAPI hardware encoding when available.
+                                  Use --no-hwaccel to force software encoding.
+  --gpu-pipeline / --no-gpu-pipeline
+                                  Decode and encode on the GPU with VAAPI.
+                                  Requires VAAPI decoding for the source codec
+                                  (checked with vainfo). Unsupported files
+                                  fail with an error, handled by --error.
+  --verbose                       Show full FFmpeg output instead of a
+                                  progress bar.
+  --help                          Show this message and exit.
 ```
 
 #### `command`
 
 ```bash
- Usage: cast-convert command [OPTIONS] {📂PATHS}
+Usage: cast-convert command [OPTIONS] {PATHS}
 
- 📜 Get FFmpeg transcoding command.
+  Get the FFmpeg transcoding command for each video.
 
-╭─ Arguments ──────────────────────────────────────────────────────────────────────────────────────╮
-│ *    📂PATHS      <path>  Path(s) to video(s). [required]                                        │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Options ────────────────────────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                                      │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ 📺 Device ──────────────────────────────────────────────────────────────────────────────────────╮
-│ --name  -n      <str>  📛 Device model name [default: Chromecast 1st Gen]                        │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ 🖥 Encoder Options ──────────────────────────────────────────────────────────────────────────────╮
-│ --replace       -r                               💾 Replace original file with transcoded video. │
-│ --threads       -t                       <int>   🧵 Number of threads to tell FFMPEG to use per  │
-│                                                  job.                                            │
-│                                                  [default: auto (CPUs / jobs)]                  │
-│ --subtitle      -s                       <path>  Path to subtitle file to embed.                 │
-│ --hwaccel           --no-hwaccel                 🎮 Use VAAPI hardware encoding when available.  │
-│                                                  Use --no-hwaccel to force software encoding.    │
-│ --gpu-pipeline      --no-gpu-pipeline            🚀 Decode and encode on the GPU with VAAPI.     │
-│                                                  Requires VAAPI decoding for the source codec    │
-│                                                  (checked with vainfo). Unsupported files fail   │
-│                                                  with an error, handled by --error.              │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ 📊 Analyze ─────────────────────────────────────────────────────────────────────────────────────╮
-│ --error  -e      <quit|skip|force>  ❗ Set the error handling strategy. [default: quit]          │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+Arguments:
+  PATHS  Path(s) to video(s).  [required]
+
+Options:
+  -n, --name <str>                Device model name.  [default: Chromecast 1st
+                                  Gen]
+  -r, --replace                   Replace original file with transcoded video.
+  -t, --threads <int>             Number of threads to tell FFMPEG to use per
+                                  job.  [default: 2]
+  -e, --error <quit|skip|force>   Set the error handling strategy.  [default:
+                                  quit]
+  -s, --subtitle <path>           Path to subtitle file to embed.
+  --hwaccel / --no-hwaccel        Use VAAPI hardware encoding when available.
+                                  Use --no-hwaccel to force software encoding.
+  --gpu-pipeline / --no-gpu-pipeline
+                                  Decode and encode on the GPU with VAAPI.
+                                  Requires VAAPI decoding for the source codec
+                                  (checked with vainfo). Unsupported files
+                                  fail with an error, handled by --error.
+  --help                          Show this message and exit.
 ```
 
 #### `inspect`
 
 ```bash
- Usage: cast-convert inspect [OPTIONS] {📂PATHS}
+Usage: cast-convert inspect [OPTIONS] {PATHS}
 
- 🔎 Inspect videos to see what attributes should get transcoded.
+  Inspect videos to see which attributes would be transcoded.
 
-╭─ Arguments ──────────────────────────────────────────────────────────────────────────────────────╮
-│ *    📂PATHS      <path>  Path(s) to video(s). [required]                                        │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Options ────────────────────────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                                      │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ 📺 Device ──────────────────────────────────────────────────────────────────────────────────────╮
-│ --name  -n      <str>  📛 Device model name [default: Chromecast 1st Gen]                        │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ 📊 Analyze ─────────────────────────────────────────────────────────────────────────────────────╮
-│ --error  -e      <quit|skip|force>  ❗ Set the error handling strategy. [default: quit]          │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+Arguments:
+  PATHS  Path(s) to video(s).  [required]
+
+Options:
+  -n, --name <str>               Device model name.  [default: Chromecast 1st
+                                 Gen]
+  -e, --error <quit|skip|force>  Set the error handling strategy.  [default:
+                                 quit]
+  --help                         Show this message and exit.
 ```
 
 #### `devices`
 
 ```bash
- Usage: cast-convert devices [OPTIONS]
+Usage: cast-convert devices [OPTIONS]
 
- 📺 List all supported devices.
+  List all supported devices.
 
-╭─ Options ────────────────────────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                                      │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ 📺 Device ──────────────────────────────────────────────────────────────────────────────────────╮
-│ --details  -d        ℹ Show detailed device information.                                         │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+Options:
+  -d, --details  Show detailed device information.
+  --help         Show this message and exit.
 ```
