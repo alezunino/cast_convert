@@ -81,7 +81,7 @@ wheels = [
 
 [[package]]
 name = "cast-convert"
-version = "0.16.1"
+version = "0.16.2"
 source = { editable = "." }
 dependencies = [
     { name = "aiopath" },

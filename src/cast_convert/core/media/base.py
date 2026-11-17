@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from enum import StrEnum, auto
 from typing import Self, Type
 
 from ..protocols import get_name
@@ -53,8 +52,3 @@ class NormalizedFormat(WithName):
     log.debug('%s(%s) normalized as %s(%s)', name, info, name, normalized)
 
     return cls(normalized)
-
-
-class OnTranscodeErr(NormalizedFormat, StrEnum):
-  cycle_video_encoders: OnTranscodeErr = auto()
-  cycle_audio_encoders: OnTranscodeErr = auto()

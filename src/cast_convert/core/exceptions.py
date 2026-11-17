@@ -5,10 +5,6 @@ class CastConvertException(Exception):
   pass
 
 
-class StreamNotFoundException(CastConvertException):
-  pass
-
-
 class FormatError(CastConvertException, ValueError):
   pass
 
@@ -18,14 +14,6 @@ class CannotCompare(CastConvertException, TypeError):
 
 
 class UnknownFormat(FormatError):
-  pass
-
-
-class FileNotVideo(FormatError):
-  pass
-
-
-class DeviceError(CastConvertException):
   pass
 
 

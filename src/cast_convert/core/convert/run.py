@@ -321,8 +321,7 @@ def get_new_path(
   replace: bool = DEFAULT_REPLACE,
   suffix: str = TRANSCODE_SUFFIX,
 ) -> Path:
-  container, video_profile, audio, subtitle = formats
-  # codec, *_ = video_profile
+  container, *_ = formats
 
   ext: Extension = video.path.suffix
 
@@ -385,14 +384,7 @@ def get_output_opts(
 
 
 def get_input_opts(formats: Formats) -> Options:
-  opts: Options = DEFAULT_INPUT_OPTS.copy()
-
-  if not formats.video_profile:
-    return opts
-
-  video_codec, resolution, fps, level = formats.video_profile
-
-  return opts
+  return DEFAULT_INPUT_OPTS.copy()
 
 
 def get_video_filters(
@@ -416,7 +408,7 @@ def get_video_filters(
     filters = ffmpeg.filter(stream, FfmpegOpt.scale_vaapi, **scale_args)
 
   elif resolution:
-    width, height = resolution
+    _, height = resolution
 
     filters = ffmpeg.filter(
       stream,

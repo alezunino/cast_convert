@@ -14,7 +14,6 @@ SOURCE_DIR: Final[Path] = CORE_DIR.parent.absolute()
 ASSET_DIR: Final[Path] = SOURCE_DIR / ASSET_DIRNAME
 
 DEVICE_INFO: Final[Path] = ASSET_DIR / SUPPORT_FILENAME
-SUPPORT_INFO: Final[Path] = ASSET_DIR / SUPPORT_FILENAME
 
 
 type Fmt = str
@@ -48,12 +47,6 @@ ENCODERS: Final[FfmpegCodecs] = DEVICE_DATA['encoders']
 VIDEO_ENCODERS: Final[FmtAliases] = ENCODERS['video']
 AUDIO_ENCODERS: Final[FmtAliases] = ENCODERS['audio']
 SUBTITLE_ENCODERS: Final[FmtAliases] = ENCODERS['subtitles']
-
-DECODERS: Final[FfmpegCodecs] = DEVICE_DATA['decoders']
-SUBTITLES: Final[Fmts] = DEVICE_DATA['subtitles']
-CONTAINERS: Final[Fmts] = DEVICE_DATA['containers']
-AUDIO: Final[Fmts] = DEVICE_DATA['audio']
-DEVICES: Final[Yaml] = DEVICE_DATA['devices']
 
 FMT_ALIASES: Final[FmtAliases] = DEVICE_DATA['aliases']
 ALIAS_FMTS: Final[AliasFmts] = {

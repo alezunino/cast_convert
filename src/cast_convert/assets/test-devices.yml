@@ -1,7 +1,0 @@
-devices:
-  Test Device:
-    profiles:
-      - vp9:
-          fps: 60
-          level: '4.0'
-          resolution: 720

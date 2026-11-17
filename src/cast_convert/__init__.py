@@ -20,12 +20,5 @@ LICENSE: Final[str] = 'CC BY-NC-ND 4.0'
 DESCRIPTION: Final[str] = \
   "Identify and convert videos to formats that are Chromecast supported."
 
-CMD: Final[str] = 'cast-convert'
 CLI_MODULE: Final[str] = f'{NAME}.cli'
 CLI_ENTRY: Final[str] = 'cli'
-
-ENTRY_POINTS: Final[dict[str, list[str]]] = {
-  "console_scripts": [
-    f"{CMD} = {CLI_MODULE}:{CLI_ENTRY}",
-  ]
-}

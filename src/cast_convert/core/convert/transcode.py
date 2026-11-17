@@ -80,12 +80,6 @@ def transcode_video(
   return transcode_video_profile(video_profile, default_video)
 
 
-def same_weights(weights: WeightMap) -> bool:
-  vals = set[int](weights.values())
-
-  return len(vals) == ALL_SAME
-
-
 def get_default_video_profile(device: Device, video: Video) -> VideoProfile | None:
   if not (video_profile := video.formats.video_profile):
     return None
@@ -319,26 +313,6 @@ def transcode_subtitles(
   default_subtitle: Subtitle | None,
 ) -> Subtitle | None:
   return None if subtitle is default_subtitle else default_subtitle
-
-
-def transcode_formats(formats: Formats, to_formats: Formats) -> TranscodeFormats | None:
-  if formats == to_formats:
-    return None
-
-  container, video_profile, audio_profile, subtitle = formats
-  to_container, to_video, to_audio, to_subtitle = to_formats
-
-  new_container = transcode_containers(container, to_container)
-  new_video = transcode_video_profile(video_profile, to_video)
-  new_audio = transcode_audio_profile(audio_profile, to_audio)
-  new_subtitle = transcode_subtitles(subtitle, to_subtitle)
-
-  return TranscodeFormats(
-    container=new_container,
-    video_profile=new_video,
-    audio_profile=new_audio,
-    subtitle=new_subtitle,
-  )
 
 
 def should_transcode(

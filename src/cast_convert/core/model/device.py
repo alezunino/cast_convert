@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Self, Type
 import logging
 
-from ..base import MIN_FUZZY_MATCH_SCORE, first, get_fuzzy_match
+from ..base import MIN_FUZZY_MATCH_SCORE, get_fuzzy_match
 from ..protocols import IsCompatible, get_name
 from ..convert.transcode import transcode_to
 from ..exceptions import UnknownFormat
@@ -41,23 +41,6 @@ class Device(IsCompatible):
     # path instead of reading and parsing the same YAML a second time.
     yaml = DEVICE_DATA if path == DEVICE_INFO else get_yaml(path)
     yield from get_devices(yaml)
-
-  @classmethod
-  def from_attrs(
-    cls: Type[Self],
-    name: str,
-    profiles: Yaml,
-    container_names: Fmts,
-    audio_names: Fmts,
-    subtitle_names: Fmts,
-  ) -> Self:
-    return get_device(
-      name,
-      profiles,
-      container_names,
-      audio_names,
-      subtitle_names,
-    )
 
   def add_format(self, fmt: VideoFormat):
     match fmt:
@@ -228,18 +211,6 @@ def load_device_with_name(
   devices = get_devices_from_file(device_file)
 
   return get_device_fuzzy(name, devices)
-
-
-def get_device_with_name(
-  name: str,
-  devices: Devices,
-) -> Device | None:
-  name = name.casefold()
-
-  if not (dev := first(d for d in devices if d.name.casefold() == name)):
-    return None
-
-  return dev
 
 
 @cache

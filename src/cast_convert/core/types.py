@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from collections.abc import Hashable
 from decimal import Decimal
 from functools import total_ordering

@@ -35,10 +35,8 @@ DEFAULT_THREADS: Final[int] = cpu_count()
 AT: Final[str] = '@'
 TAB: Final[str] = '  '
 LEVEL_SEP: Final[str] = 'L'
-PROFILE_SEP: Final[str] = AT + LEVEL_SEP
 SUBTITLE_SEP: Final[str] = '/'
 NEW_LINE: Final[str] = '\n'
-PRIVATE_PREFIX: Final[str] = '_'
 JOIN_COMMAND: Final[str] = ' '
 
 MIN_FUZZY_MATCH_SCORE: Final[int] = 30
@@ -47,7 +45,6 @@ FILESIZE_CHECK_WAIT: Final[float] = 2.0
 NO_SIZE: Final[int] = -1
 
 CODEC_BIAS: Final[int] = 5
-INCREMENT: Final[int] = 1
 
 
 DEFAULT_LOG_LEVEL: Final[LogLevel] = LogLevel.warn

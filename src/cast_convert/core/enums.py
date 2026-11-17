@@ -24,10 +24,7 @@ class Rc(IntEnum):
   ok: Self = 0
   err = auto()
 
-  no_command = auto()
-  missing_args = auto()
-  no_matching_device = auto()
-
-  must_convert = auto()
-  failed_conversion = auto()
-  unknown_format = auto()
+  no_command = 2
+  # Exit codes stay stable after removing unused members (3, 6 and 7).
+  no_matching_device = 4
+  must_convert = 5

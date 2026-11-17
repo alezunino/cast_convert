@@ -118,11 +118,6 @@ class Subtitle(NormalizedFormat, StrEnum):
     return super().from_info(info)
 
 
-class ProfileName(NormalizedFormat, StrEnum):
-  main = auto()
-  main10 = auto()
-
-
 type Codecs = AudioCodec | VideoCodec
 
 Containers = list[Container]

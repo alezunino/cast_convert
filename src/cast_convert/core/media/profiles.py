@@ -7,7 +7,7 @@ from typing import Final, TYPE_CHECKING
 
 from unpackable import Unpackable
 
-from .codecs import AudioCodec, Codec, Codecs, ProfileName, VideoCodec
+from .codecs import AudioCodec, Codec, Codecs, VideoCodec
 from ..base import (
   CODEC_BIAS, NEW_LINE,
 )
@@ -104,13 +104,6 @@ class VideoProfile(Profile, IsCompatible):
         return is_level_compatible(self.level, level)
 
     super().is_compatible(other)
-
-
-@dataclass(eq=True, frozen=True)
-class EncoderProfile(Profile):
-  """Encoder Profile"""
-  profile: ProfileName | None = None
-  level: Level | None = None
 
 
 type Profiles = AudioProfile | VideoProfile

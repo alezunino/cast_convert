@@ -1,6 +1,6 @@
 [project]
 name = "cast_convert"
-version = "0.16.1"
+version = "0.16.2"
 description = "📽️ Identify and convert videos to formats that are Chromecast supported."
 authors = [
   { name = "Alex DeLorenzo", url = "https://alexdelorenzo.dev", email = "projects@alexdelorenzo.dev" },

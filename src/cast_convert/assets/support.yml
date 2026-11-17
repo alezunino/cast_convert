@@ -1,12 +1,4 @@
 # Supported formats from https://developers.google.com/cast/docs/media
-images:
-  - APNG
-  - BMP
-  - GIF
-  - JPEG
-  - PNG
-  - WEBP
-
 containers:
   - Matroska
   - MP4
@@ -139,54 +131,6 @@ encoders:
   subtitles:
     webvtt:
       - webvtt
-
-# map of codecs to ffmpeg decoders
-decoders:
-  video:
-    avc:
-      - h264
-      - h264_v4l2m2m
-      - h264_qsv
-      - h264_cuvid
-    hevc:
-      - hevc
-      - hevc_qsv
-      - hevc_v4l2m2m
-      - hevc_cuvid
-    vp8:
-      - vp8
-      - vp8_v4l2m2m
-      - libvpx
-      - vp8_cuvid
-      - vp8_qsv
-    vp9:
-      - vp9
-      - vp9_v4l2m2m
-      - libvpx-vp9
-      - vp9_cuvid
-      - vp9_qsv
-
-  audio:
-    mp3:
-      - mp3float
-      - mp3
-      - mp3adufloat
-      - mp3adu
-      - mp3on4float
-      - mp3on4
-    aac:
-      - aac
-      - aac_fixed
-      - aac_latm
-    vorbis:
-      - vorbis
-      - libvorbis
-    opus:
-      - opus
-      - libopus
-    flac:
-      - flac
-
 
 # Profile record shape
 _profile: &profile
