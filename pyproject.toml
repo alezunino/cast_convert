@@ -1,6 +1,6 @@
 [project]
 name = "cast_convert"
-version = "0.16.2"
+version = "0.16.3"
 description = "📽️ Identify and convert videos to formats that are Chromecast supported."
 authors = [
   { name = "Alex DeLorenzo", url = "https://alexdelorenzo.dev", email = "projects@alexdelorenzo.dev" },
@@ -22,7 +22,7 @@ dependencies = [
 ]
 readme = "README.md"
 requires-python = ">=3.12"
-license = { text = "CC BY-NC-ND 4.0" }
+license = { text = "AGPL-3.0" }
 homepage = "https://github.com/alexdelorenzo/cast_convert"
 
 [project.urls]

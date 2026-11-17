@@ -14,8 +14,11 @@ PROJECT_HOME: Final[str] = 'https://github.com/alexdelorenzo/cast_convert'
 AUTHOR_HOME: Final[str] = 'https://alexdelorenzo.dev'
 AUTHOR: Final[str] = 'Alex DeLorenzo'
 AUTHOR_INFO: Final[str] = f'{AUTHOR} ({AUTHOR_HOME})'
-COPYRIGHT_NOTICE: Final[str] = f'Copyright © 2023 {AUTHOR_INFO}'
-LICENSE: Final[str] = 'CC BY-NC-ND 4.0'
+FORK_AUTHOR_HOME: Final[str] = 'https://users.exa.unicen.edu.ar/~azunino/'
+FORK_AUTHOR: Final[str] = 'Alejandro Zunino'
+FORK_AUTHOR_INFO: Final[str] = f'{FORK_AUTHOR} ({FORK_AUTHOR_HOME})'
+COPYRIGHT_NOTICE: Final[str] = f'Copyright © 2023 {AUTHOR_INFO}, © 2026 {FORK_AUTHOR_INFO}'
+LICENSE: Final[str] = 'AGPL-3.0'
 
 DESCRIPTION: Final[str] = \
   "Identify and convert videos to formats that are Chromecast supported."

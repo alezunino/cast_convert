@@ -1,10 +1,22 @@
-# 📽️ Convert videos for Chromecasts
+# 📽️ Convert videos for casting devices
 
-Identify and convert videos to formats that are Chromecast supported.
+Identify and convert videos to formats that your casting devices support.
 
-Cast Convert can tell you whether videos will play correctly on your casting devices. If they won't, this project can convert videos into formats that devices do support.
+Cast Convert can tell you whether videos will play correctly on your casting device. If they won't, this project can convert them into formats that devices do support — transcoding only what is strictly necessary.
 
 [Click here to see a list of supported devices](#supported-devices).
+
+### About this fork
+
+This is a fork of [cast_convert](https://github.com/alexdelorenzo/cast_convert), the project originally created by Alex DeLorenzo. This fork continues that work with a focus on:
+
+- **Faster development** — shipping fixes and improvements at a higher pace
+- **Hardware acceleration** — expanding VAAPI/GPU encode and decode support
+- **More devices** — growing beyond Chromecast to Roku, Fire TV and other cast targets
+- **Better usability** — clearer output and simpler day-to-day workflows
+- **Continued development** — keeping the project actively maintained
+
+The scope is no longer Chromecast-only. The goal is to support more cast targets and enable direct streaming without reencoding when files are already compatible — whether you use [Emby](https://emby.media/), [Plex](https://www.plex.tv/) or stream from an Android phone.
 
 ### What Cast Convert does
 
@@ -24,7 +36,7 @@ the video so that it will play on the device.
 
 ### Why use Cast Convert over other options?
 
-Cast Convert calculates the least amount of transcoding required to playback videos. It also has detailed support profiles for every format supported by each  device, whereas other transcoding options tend to force all videos into one format.
+Cast Convert calculates the least amount of transcoding required to playback videos. It also has detailed support profiles for every format supported by each device, whereas other transcoding options tend to force all videos into one format.
 
 For example, you may have a video named `video.mp4` that isn't compatible with your device. Cast Convert can generate a transcoding plan that does the least amount of transcoding necessary instead of blindly transcoding every video into the same format.
 
@@ -64,13 +76,14 @@ $ cast-convert inspect --name '1st Gen' video.mp4
 
 ### About Cast Convert
 
-Individual casting devices like the Chromecast have unique video encoding, audio encoding and container support
-combinations for video files. Cast Convert has detailed compatibility profiles for each individual Chromecast model on
-the market.
+Individual casting devices — Chromecast, Roku, Fire TV and others — have unique video encoding, audio encoding and
+container support combinations. Cast Convert keeps detailed compatibility profiles for each supported model and is
+expanding them to cover more devices.
 
 `cast-convert` will inspect a video's metadata to determine what video attributes must get changed to successfully play
 it. To use resources efficiently, it will determine only the minimum amount of transcoding needed to successfully play
-each video back.
+each video back. When a file already matches what a device can play, it can be streamed directly by tools such as Emby,
+Plex or an Android phone without reencoding it first.
 
 ### Supported devices
 
@@ -82,6 +95,8 @@ each video back.
 - Chromecast with Google TV
 - Google Nest Hub
 - Nest Hub Max
+
+Support for Fire TV and more Roku, Android TV and other device models is planned — see [About this fork](#about-this-fork).
 
 ## Requirements
 
@@ -135,7 +150,7 @@ $ cast-convert --help
  📽️ Identify and convert videos to formats that are Chromecast supported.
 
  See https://github.com/alexdelorenzo/cast_contvert for more information.
- Copyright © 2023 Alex DeLorenzo (https://alexdelorenzo.dev). License: CC BY-NC-ND 4.0
+ Copyright © 2023 Alex DeLorenzo (https://alexdelorenzo.dev), © 2026 Alejandro Zunino (https://users.exa.unicen.edu.ar/~azunino/). License: AGPL-3.0
 
 ╭─ Options ────────────────────────────────────────────────────────────────────────────────────────╮
 │ --install-completion          Install completion for the current shell.                          │
